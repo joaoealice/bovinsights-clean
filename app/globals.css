@@ -1,0 +1,214 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-bebas: 'Bebas Neue', sans-serif;
+    --font-crimson: 'Crimson Pro', serif;
+    --font-space: 'Space Mono', monospace;
+
+    /* Modo Claro */
+    --background: 43 40 36;
+    --foreground: 250 248 245;
+    --card: 52 48 43;
+    --card-foreground: 250 248 245;
+    --popover: 52 48 43;
+    --popover-foreground: 250 248 245;
+    --primary: 142 106 54;
+    --primary-foreground: 255 255 255;
+    --secondary: 76 112 68;
+    --secondary-foreground: 255 255 255;
+    --muted: 66 62 56;
+    --muted-foreground: 168 162 155;
+    --accent: 218 145 46;
+    --accent-foreground: 28 24 20;
+    --destructive: 220 38 38;
+    --destructive-foreground: 255 255 255;
+    --border: 76 70 62;
+    --input: 76 70 62;
+    --ring: 142 106 54;
+    --success: 76 112 68;
+    --warning: 218 145 46;
+    --error: 220 38 38;
+  }
+
+  .dark {
+    /* Modo Escuro */
+    --background: 15 12 10;
+    --foreground: 250 248 245;
+    --card: 28 24 20;
+    --card-foreground: 250 248 245;
+    --popover: 28 24 20;
+    --popover-foreground: 250 248 245;
+    --primary: 218 165 100;
+    --primary-foreground: 15 12 10;
+    --secondary: 106 142 98;
+    --secondary-foreground: 15 12 10;
+    --muted: 43 40 36;
+    --muted-foreground: 168 162 155;
+    --accent: 238 185 106;
+    --accent-foreground: 15 12 10;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --border: 52 48 43;
+    --input: 52 48 43;
+    --ring: 218 165 100;
+    --success: 106 142 98;
+    --warning: 238 185 106;
+    --error: 239 68 68;
+  }
+  
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-body;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-size: 18px;
+  }
+
+  /* Fontes maiores para melhor manuseio */
+  input, select, textarea {
+    font-size: 18px !important;
+  }
+
+  button {
+    font-size: 18px;
+  }
+
+  label {
+    font-size: 16px;
+  }
+  
+  /* Scrollbar personalizada */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-muted/30;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/40 rounded-lg;
+    transition: background-color 0.2s;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/60;
+  }
+}
+
+@layer components {
+  /* Textura de fundo */
+  .texture-grain {
+    position: relative;
+  }
+  
+  .texture-grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Card com efeito de couro */
+  .card-leather {
+    @apply bg-card border border-border rounded-lg shadow-md;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .card-leather::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(142, 106, 54, 0.05) 100%);
+    pointer-events: none;
+  }
+  
+  /* Glass effect */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  
+  /* Botões */
+  .btn-primary {
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-3 rounded-lg shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold px-6 py-3 rounded-lg shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold px-6 py-3 rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95;
+  }
+  
+  /* Input estilizado */
+  .input-field {
+    @apply bg-muted/30 border border-input text-foreground px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200;
+  }
+  
+  /* Animações */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(142, 106, 54, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 10px rgba(142, 106, 54, 0);
+    }
+  }
+  
+  .animate-slide-in {
+    animation: slideInUp 0.5s ease-out;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in;
+  }
+  
+  .animate-pulse-glow {
+    animation: pulse-glow 2s infinite;
+  }
+}
+
+@layer utilities {
+  .text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(28, 24, 20, 0.3);
+  }
+  
+  .text-shadow-md {
+    text-shadow: 0 2px 4px rgba(28, 24, 20, 0.4);
+  }
+}
