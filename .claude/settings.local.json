@@ -12,7 +12,8 @@
       "mcp__ide__getDiagnostics",
       "Bash(timeout:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
