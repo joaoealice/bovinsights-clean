@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import NotificacoesDropdown from '@/components/layout/NotificacoesDropdown'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -25,6 +26,7 @@ export default function DashboardLayoutClient({
   const [farmName, setFarmName] = useState(initialFarmName)
   const [theme, setTheme] = useState<ThemeMode>('light')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as ThemeMode || 'light'
@@ -72,16 +74,37 @@ export default function DashboardLayoutClient({
     router.push('/auth/login')
   }
 
-  const menuItems = [
+type MenuItem = {
+  icon: string;
+  label: string;
+  href: string;
+  subItems?: MenuItem[]; // Optional sub-items
+};
+
+  const menuItems: MenuItem[] = [
     { icon: '📊', label: 'Dashboard', href: '/dashboard' },
     { icon: '🐮', label: 'Animais', href: '/dashboard/animais' },
-    { icon: '📍', label: 'Lotes', href: '/dashboard/lotes' },
-    { icon: '⚖️', label: 'Pesagens', href: '/dashboard/pesagens' },
-    { icon: '💉', label: 'Manejo', href: '/dashboard/manejo' },
+    {
+      icon: '📍',
+      label: 'Lote',
+      href: '/dashboard/lotes', // Parent link for Lote
+      subItems: [
+        { icon: '📍', label: 'Lotes', href: '/dashboard/lotes' },
+        { icon: '⚖️', label: 'Pesagens', href: '/dashboard/pesagens' },
+        { icon: '💉', label: 'Manejos', href: '/dashboard/manejo' },
+      ],
+    },
     { icon: '🌱', label: 'Suporte', href: '/dashboard/suporte-forrageiro' },
-    { icon: '💰', label: 'Financeiro', href: '/dashboard/financeiro' },
-    { icon: '🎯', label: 'Vendas', href: '/dashboard/vendas' },
-    { icon: '📋', label: 'Contas', href: '/dashboard/contas' },
+    {
+      icon: '💰',
+      label: 'Financeiro',
+      href: '/dashboard/financeiro', // Parent link for Financeiro
+      subItems: [
+        { icon: '🎯', label: 'Vendas', href: '/dashboard/vendas' },
+        { icon: '📋', label: 'Contas', href: '/dashboard/contas' },
+      ],
+    },
+    { icon: '✅', label: 'Tarefas', href: '/dashboard/tarefas' },
     { icon: '📅', label: 'Calendário', href: '/dashboard/calendario' },
     { icon: '📄', label: 'Relatórios', href: '/dashboard/relatorios' },
   ]
@@ -116,6 +139,7 @@ export default function DashboardLayoutClient({
     if (pathname?.includes('/suporte-forrageiro')) return 'SUPORTE FORRAGEIRO'
     if (pathname?.includes('/financeiro')) return 'FINANCEIRO'
     if (pathname?.includes('/contas')) return 'CONTAS'
+    if (pathname?.includes('/tarefas')) return 'TAREFAS'
     if (pathname?.includes('/calendario')) return 'CALENDÁRIO'
     if (pathname?.includes('/relatorios')) return 'RELATÓRIOS'
     if (pathname?.includes('/configuracoes')) return 'MEU PERFIL'
@@ -150,12 +174,7 @@ export default function DashboardLayoutClient({
             >
               <span className="text-xl">{getThemeIcon()}</span>
             </button>
-            <button className="relative p-2 hover:bg-muted rounded-lg transition-colors">
-              <span className="text-xl">🔔</span>
-              <span className="absolute top-0 right-0 w-4 h-4 bg-error rounded-full text-xs flex items-center justify-center text-white font-bold">
-                3
-              </span>
-            </button>
+            <NotificacoesDropdown />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 hover:bg-muted rounded-lg transition-colors"
@@ -225,20 +244,65 @@ export default function DashboardLayoutClient({
 
         <nav className="p-4 space-y-2">
           {menuItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`w-full flex items-center gap-4 px-4 py-4 rounded-lg transition-all text-lg ${
-                isActive(item.href)
-                  ? 'bg-primary/20 text-primary'
-                  : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'
-              }`}
-            >
-              <span className="text-2xl flex-shrink-0">{item.icon}</span>
-              <span className="font-body font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                {item.label}
-              </span>
-            </Link>
+            <div key={item.label}>
+              {item.subItems ? (
+                // Parent item with sub-items
+                <>
+                  <button
+                    onClick={() => setOpenSubmenu(openSubmenu === item.label ? null : item.label)}
+                    className={`w-full flex items-center justify-between gap-4 px-4 py-4 rounded-lg transition-all text-lg ${
+                      isActive(item.href) || (item.subItems && item.subItems.some(subItem => isActive(subItem.href)))
+                        ? 'bg-primary/20 text-primary'
+                        : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl flex-shrink-0">{item.icon}</span>
+                      <span className="font-body font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        {item.label}
+                      </span>
+                    </div>
+                    <span className={`text-xl transition-transform ${openSubmenu === item.label ? 'rotate-90' : ''} opacity-0 group-hover:opacity-100`}>▶</span>
+                  </button>
+                  {openSubmenu === item.label && (
+                    <div className="pl-8 pt-2 space-y-1 animate-fade-in-down">
+                      {item.subItems.map((subItem) => (
+                        <Link
+                          key={subItem.label}
+                          href={subItem.href}
+                          className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all text-base ${
+                            isActive(subItem.href)
+                              ? 'bg-primary/20 text-primary'
+                              : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'
+                          }`}
+                        >
+                          <span className="text-xl flex-shrink-0">{subItem.icon}</span>
+                          <span className="font-body font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            {subItem.label}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                // Regular menu item without sub-items
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`w-full flex items-center gap-4 px-4 py-4 rounded-lg transition-all text-lg ${
+                    isActive(item.href)
+                      ? 'bg-primary/20 text-primary'
+                      : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'
+                  }`}
+                >
+                  <span className="text-2xl flex-shrink-0">{item.icon}</span>
+                  <span className="font-body font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    {item.label}
+                  </span>
+                </Link>
+              )}
+            </div>
           ))}
         </nav>
 
@@ -295,12 +359,7 @@ export default function DashboardLayoutClient({
               >
                 <span className="text-2xl">{getThemeIcon()}</span>
               </button>
-              <button className="relative p-3 hover:bg-muted rounded-lg transition-colors">
-                <span className="text-2xl">🔔</span>
-                <span className="absolute -top-1 -right-1 w-6 h-6 bg-error rounded-full text-sm flex items-center justify-center text-white font-bold">
-                  3
-                </span>
-              </button>
+              <NotificacoesDropdown />
 
               <div className="flex items-center gap-4 pl-4 border-l border-border">
                 <div className="text-right">
