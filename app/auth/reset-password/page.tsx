@@ -56,7 +56,7 @@ export default function ResetPasswordPage() {
         <div className="glass-card rounded-3xl p-8 md:p-10 w-full max-w-md animate-slide-in">
           <div className="flex justify-center mb-8">
             <Image
-              src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20(2).png"
+              src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo.svg"
               alt="Bovinsights Logo"
               width={200}
               height={96}

@@ -105,7 +105,7 @@ export default function SignUpPage() {
           {/* Logo */}
           <div className="flex justify-center mb-6">
             <Image
-              src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20(2).png"
+              src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo.svg"
               alt="Bovinsights Logo"
               width={180}
               height={86}
