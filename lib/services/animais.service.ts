@@ -130,7 +130,7 @@ export async function getAnimais(): Promise<AnimalWithDetails[]> {
     .from('animais')
     .select(`
       *,
-      lotes:lote_id(id, nome)
+      lotes!fk_animais_lote(id, nome)
     `)
     .eq('usuario_id', user.id)
     .order('created_at', { ascending: false })
@@ -160,7 +160,7 @@ export async function getAnimalById(id: string): Promise<AnimalWithDetails | nul
     .from('animais')
     .select(`
       *,
-      lotes:lote_id(id, nome)
+      lotes!fk_animais_lote(id, nome)
     `)
     .eq('id', id)
     .single()
@@ -189,7 +189,7 @@ export async function getAnimaisByLote(loteId: string): Promise<AnimalWithDetail
     .from('animais')
     .select(`
       *,
-      lotes:lote_id(id, nome)
+      lotes!fk_animais_lote(id, nome)
     `)
     .eq('usuario_id', user.id)
     .eq('lote_id', loteId)
@@ -432,7 +432,7 @@ export async function searchAnimais(
     .from('animais')
     .select(`
       *,
-      lotes:lote_id(id, nome)
+      lotes!fk_animais_lote(id, nome)
     `)
     .eq('usuario_id', user.id)
 

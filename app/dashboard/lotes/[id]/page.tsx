@@ -383,7 +383,7 @@ export default function LoteDetalhesPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {/* Data de Criação */}
           <div className="bg-background/50 rounded-xl p-4 border border-border/50 text-center">
             <p className="text-xs text-muted-foreground mb-1">Data de Criação</p>
@@ -408,7 +408,7 @@ export default function LoteDetalhesPage() {
             </p>
           </div>
 
-          {/* Peso Médio Inicial */}
+          {/* Peso Médio Inicial com conversor @ */}
           <div className="bg-background/50 rounded-xl p-4 border border-border/50 text-center">
             <p className="text-xs text-muted-foreground mb-1">Peso Médio Inicial</p>
             <p className="font-mono font-bold text-lg text-foreground">
@@ -416,19 +416,14 @@ export default function LoteDetalhesPage() {
                 ? `${(lote.peso_total_entrada / lote.quantidade_total).toFixed(1)} kg`
                 : '-'}
             </p>
-          </div>
-
-          {/* Arroba Média Inicial */}
-          <div className="bg-primary/10 rounded-xl p-4 border border-primary/30 text-center">
-            <p className="text-xs text-muted-foreground mb-1">@ Média Inicial</p>
-            <p className="font-mono font-bold text-lg text-primary">
+            <p className="text-xs text-primary font-medium mt-1">
               {lote.peso_total_entrada && lote.quantidade_total
                 ? `${(lote.peso_total_entrada / lote.quantidade_total / 30).toFixed(2)} @`
-                : '-'}
+                : ''}
             </p>
           </div>
 
-          {/* Peso Total Inicial */}
+          {/* Peso Total Inicial com conversor @ */}
           <div className="bg-background/50 rounded-xl p-4 border border-border/50 text-center">
             <p className="text-xs text-muted-foreground mb-1">Peso Total Inicial</p>
             <p className="font-mono font-bold text-lg text-foreground">
@@ -436,15 +431,10 @@ export default function LoteDetalhesPage() {
                 ? `${lote.peso_total_entrada.toLocaleString('pt-BR')} kg`
                 : '-'}
             </p>
-          </div>
-
-          {/* Arroba Total Inicial */}
-          <div className="bg-primary/10 rounded-xl p-4 border border-primary/30 text-center">
-            <p className="text-xs text-muted-foreground mb-1">@ Total Inicial</p>
-            <p className="font-mono font-bold text-lg text-primary">
+            <p className="text-xs text-primary font-medium mt-1">
               {lote.peso_total_entrada
                 ? `${(lote.peso_total_entrada / 30).toFixed(1)} @`
-                : '-'}
+                : ''}
             </p>
           </div>
         </div>
@@ -1055,74 +1045,6 @@ export default function LoteDetalhesPage() {
       {/* KPIs */}
       <LoteKPIs kpis={kpis} />
 
-      {/* Informações Detalhadas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Card de Informações */}
-        <div className="card-leather p-6 space-y-4">
-          <h2 className="font-display text-2xl mb-4">INFORMAÇÕES</h2>
-
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Tipo de Lote</p>
-            <p className="font-semibold">{lote.tipo_lote || 'Não especificado'}</p>
-          </div>
-
-          {lote.observacoes && (
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Observações</p>
-              <p className="text-sm">{lote.observacoes}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Card de Custos da Compra */}
-        <div className="card-leather p-6">
-          <h2 className="font-display text-2xl mb-4">CUSTOS DA COMPRA</h2>
-
-          {lote.custo_total && lote.custo_total > 0 ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Valor dos Animais</p>
-                  <p className="font-mono font-bold text-lg">
-                    {lote.valor_animais?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || '-'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Frete + Comissão</p>
-                  <p className="font-mono font-bold text-lg">
-                    {((lote.frete || 0) + (lote.comissao || 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </p>
-                </div>
-              </div>
-              <div className="pt-4 border-t border-border/50 space-y-3">
-                <div className="flex justify-between items-center">
-                  <p className="text-sm text-muted-foreground">Custo Total Compra</p>
-                  <p className="font-mono font-bold text-xl text-primary">
-                    {lote.custo_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </p>
-                </div>
-                <div className="flex justify-between items-center bg-primary/10 rounded-lg p-3">
-                  <p className="text-sm text-muted-foreground">Investimento Médio/Unidade</p>
-                  <p className="font-mono font-bold text-xl text-primary">
-                    {lote.custo_por_cabeca
-                      ? lote.custo_por_cabeca.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                      : lote.quantidade_total && lote.quantidade_total > 0
-                        ? (lote.custo_total / lote.quantidade_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                        : '-'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-muted/20 border border-muted/30 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground">
-                Custos de compra não informados
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Card de RESUMO FINANCEIRO DO LOTE */}
       {resumoFinanceiro && (
         <div className="card-leather p-6 bg-gradient-to-r from-primary/5 to-accent/5 border-2 border-primary/20">
@@ -1186,59 +1108,60 @@ export default function LoteDetalhesPage() {
             resumoFinanceiro.margem_percentual >= 0 ? 'bg-warning/10 border-warning/30' :
             'bg-error/10 border-error/30'
           }`}>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h3 className="font-display text-xl mb-2">MARGEM DE LUCRO ATUAL</h3>
-                <p className="text-sm text-muted-foreground">
-                  {resumoFinanceiro.margem_percentual >= 25
-                    ? 'Margem excelente! Acima do objetivo de 25%'
-                    : resumoFinanceiro.margem_percentual >= 10
-                    ? 'Margem boa, mas abaixo do objetivo de 25%'
-                    : resumoFinanceiro.margem_percentual >= 0
-                    ? 'Margem baixa, considere otimizar custos'
-                    : 'Operando com prejuizo no momento'
-                  }
+            {/* Header com título */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display text-xl">MARGEM DE LUCRO ATUAL</h3>
+              <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
+                resumoFinanceiro.margem_percentual >= 25 ? 'bg-success/20 text-success' :
+                resumoFinanceiro.margem_percentual >= 10 ? 'bg-primary/20 text-primary' :
+                resumoFinanceiro.margem_percentual >= 0 ? 'bg-warning/20 text-warning' :
+                'bg-error/20 text-error'
+              }`}>
+                {resumoFinanceiro.margem_percentual >= 25 ? 'Excelente' :
+                 resumoFinanceiro.margem_percentual >= 10 ? 'Boa' :
+                 resumoFinanceiro.margem_percentual >= 0 ? 'Baixa' : 'Prejuizo'}
+              </span>
+            </div>
+
+            {/* Valores principais em destaque */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="text-center p-4 bg-background/50 rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">Margem</p>
+                <p className={`font-mono font-bold text-4xl ${
+                  resumoFinanceiro.margem_percentual >= 25 ? 'text-success' :
+                  resumoFinanceiro.margem_percentual >= 10 ? 'text-primary' :
+                  resumoFinanceiro.margem_percentual >= 0 ? 'text-warning' : 'text-error'
+                }`}>
+                  {resumoFinanceiro.margem_percentual > 0 ? '+' : ''}{resumoFinanceiro.margem_percentual.toFixed(1)}%
                 </p>
               </div>
-              <div className="flex items-center gap-6">
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-1">Lucro/Prejuizo</p>
-                  <p className={`font-mono font-bold text-2xl ${
-                    resumoFinanceiro.lucro_ou_prejuizo >= 0 ? 'text-success' : 'text-error'
-                  }`}>
-                    {resumoFinanceiro.lucro_ou_prejuizo >= 0 ? '+' : ''}{formatCurrency(resumoFinanceiro.lucro_ou_prejuizo)}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-1">Margem</p>
-                  <p className={`font-mono font-bold text-4xl ${
-                    resumoFinanceiro.margem_percentual >= 25 ? 'text-success' :
-                    resumoFinanceiro.margem_percentual >= 10 ? 'text-primary' :
-                    resumoFinanceiro.margem_percentual >= 0 ? 'text-warning' : 'text-error'
-                  }`}>
-                    {resumoFinanceiro.margem_percentual > 0 ? '+' : ''}{resumoFinanceiro.margem_percentual.toFixed(1)}%
-                  </p>
-                </div>
+              <div className="text-center p-4 bg-background/50 rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">Lucro/Prejuizo</p>
+                <p className={`font-mono font-bold text-2xl ${
+                  resumoFinanceiro.lucro_ou_prejuizo >= 0 ? 'text-success' : 'text-error'
+                }`}>
+                  {resumoFinanceiro.lucro_ou_prejuizo >= 0 ? '+' : ''}{formatCurrency(resumoFinanceiro.lucro_ou_prejuizo)}
+                </p>
               </div>
             </div>
 
             {/* Indicadores adicionais */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border/50">
+            <div className="grid grid-cols-4 gap-3 pt-4 border-t border-border/50">
               <div className="text-center">
-                <p className="text-xs text-muted-foreground">Total Animais</p>
-                <p className="font-mono font-bold">{resumoFinanceiro.total_animais} cab</p>
+                <p className="text-xs text-muted-foreground mb-1">Animais</p>
+                <p className="font-mono font-bold text-sm">{resumoFinanceiro.total_animais} cab</p>
               </div>
               <div className="text-center">
-                <p className="text-xs text-muted-foreground">Total Arrobas</p>
-                <p className="font-mono font-bold">{resumoFinanceiro.total_arrobas.toFixed(1)} @</p>
+                <p className="text-xs text-muted-foreground mb-1">Arrobas</p>
+                <p className="font-mono font-bold text-sm">{resumoFinanceiro.total_arrobas.toFixed(1)} @</p>
               </div>
               <div className="text-center">
-                <p className="text-xs text-muted-foreground">Custo/Cabeca</p>
-                <p className="font-mono font-bold">{formatCurrency(resumoFinanceiro.custo_por_cabeca)}</p>
+                <p className="text-xs text-muted-foreground mb-1">R$/Cabeca</p>
+                <p className="font-mono font-bold text-sm">{formatCurrency(resumoFinanceiro.custo_por_cabeca)}</p>
               </div>
               <div className="text-center">
-                <p className="text-xs text-muted-foreground">Custo/Arroba</p>
-                <p className="font-mono font-bold">{formatCurrency(resumoFinanceiro.custo_por_arroba)}</p>
+                <p className="text-xs text-muted-foreground mb-1">R$/Arroba</p>
+                <p className="font-mono font-bold text-sm">{formatCurrency(resumoFinanceiro.custo_por_arroba)}</p>
               </div>
             </div>
           </div>
@@ -1333,10 +1256,23 @@ export default function LoteDetalhesPage() {
             {/* Grafico de Evolucao de Peso */}
             {pesagensResumo.length >= 1 && (
               <div className="bg-muted/10 rounded-xl p-4 border border-border">
-                <h3 className="font-display text-lg mb-4 flex items-center gap-2">
-                  <span>📈</span>
-                  Evolucao de Peso
-                </h3>
+                {/* Data visível em cima do gráfico */}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-display text-lg flex items-center gap-2">
+                    <span>📈</span>
+                    Evolucao de Peso
+                  </h3>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Última pesagem</p>
+                    <p className="font-mono font-semibold text-primary">
+                      {new Date(pesagensResumo[0].data + 'T00:00:00').toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                </div>
                 <GraficoEvolucaoPeso
                   pesagens={pesagensResumo}
                   pesoMedioInicial={
@@ -1349,84 +1285,111 @@ export default function LoteDetalhesPage() {
               </div>
             )}
 
-            {/* Cards de Pesagens por Data */}
+            {/* Tabela de Histórico de Pesagens - Estilo Excel */}
             <div>
               <h3 className="font-display text-lg mb-3 flex items-center gap-2">
                 <span>📋</span>
-                Registros de Pesagem
+                Histórico Completo
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pesagensResumo.slice(0, 6).map((pesagem, index) => {
-                  const formatDate = (dateString: string) => {
-                    const date = new Date(dateString + 'T00:00:00')
-                    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-                  }
-                  const isLatest = index === 0
-
-                  // Calcular GMD em relacao a pesagem anterior
-                  let gmd = 0
-                  if (index < pesagensResumo.length - 1) {
-                    const pesagemAnterior = pesagensResumo[index + 1]
-                    const ganho = pesagem.pesoMedio - pesagemAnterior.pesoMedio
-                    const dias = Math.max(1, Math.floor(
-                      (new Date(pesagem.data).getTime() - new Date(pesagemAnterior.data).getTime()) / (1000 * 60 * 60 * 24)
-                    ))
-                    gmd = ganho / dias
-                  }
-
-                  return (
-                    <div
-                      key={pesagem.data}
-                      className={`p-4 rounded-lg border ${
-                        isLatest
-                          ? 'bg-primary/10 border-primary/30'
-                          : 'bg-muted/10 border-border'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className={`text-sm font-semibold ${isLatest ? 'text-primary' : 'text-muted-foreground'}`}>
-                          {formatDate(pesagem.data)}
-                        </span>
-                        {isLatest && (
-                          <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">
-                            Ultima
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-muted/30 border-b border-border">
+                      <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">Data</th>
+                      <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase">Qtde</th>
+                      <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase">Peso Médio</th>
+                      <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase">Rendimento (@)</th>
+                      <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase">GMD</th>
+                      <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase">Período</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Linha inicial - Data de criação do lote */}
+                    {lote.peso_total_entrada && lote.quantidade_total && (
+                      <tr className="border-b border-border/50 bg-success/5">
+                        <td className="p-3">
+                          <span className="font-mono text-sm text-success font-semibold">
+                            {new Date(lote.data_entrada || lote.created_at).toLocaleDateString('pt-BR')}
                           </span>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Animais</p>
-                          <p className="font-mono font-bold">{pesagem.qtdAnimais}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Peso Medio</p>
-                          <p className="font-mono font-bold">{pesagem.pesoMedio.toFixed(1)} kg</p>
-                        </div>
-                      </div>
-                      {/* GMD do periodo */}
-                      {gmd !== 0 && (
-                        <div className="mt-2 pt-2 border-t border-border/50">
-                          <p className="text-xs text-muted-foreground">GMD do Periodo</p>
-                          <p className={`font-mono font-bold ${
-                            gmd >= 1 ? 'text-success' :
-                            gmd >= 0.7 ? 'text-primary' :
-                            gmd >= 0.5 ? 'text-warning' : 'text-error'
-                          }`}>
-                            {gmd.toFixed(2)} kg/dia
-                          </p>
-                        </div>
-                      )}
-                      <div className="mt-2 pt-2 border-t border-border/50">
-                        <p className="text-xs text-muted-foreground">Peso Total / Arrobas</p>
-                        <p className="font-mono text-sm">{pesagem.pesoTotal.toFixed(0)} kg / {(pesagem.pesoTotal / 30).toFixed(1)} @</p>
-                      </div>
-                    </div>
-                  )
-                })}
+                          <span className="ml-2 text-xs bg-success/20 text-success px-2 py-0.5 rounded">Entrada</span>
+                        </td>
+                        <td className="text-center p-3 font-mono text-sm">{lote.quantidade_total}</td>
+                        <td className="text-center p-3 font-mono text-sm">{(lote.peso_total_entrada / lote.quantidade_total).toFixed(1)} kg</td>
+                        <td className="text-center p-3 font-mono text-sm">{(lote.peso_total_entrada / 30).toFixed(1)} @</td>
+                        <td className="text-center p-3 font-mono text-sm text-muted-foreground">-</td>
+                        <td className="text-center p-3 font-mono text-sm text-muted-foreground">0 dias</td>
+                      </tr>
+                    )}
+                    {/* Linhas de pesagens */}
+                    {[...pesagensResumo].reverse().map((pesagem, index, arr) => {
+                      const formatDate = (dateString: string) => {
+                        const date = new Date(dateString + 'T00:00:00')
+                        return date.toLocaleDateString('pt-BR')
+                      }
+                      const isLatest = index === arr.length - 1
+
+                      // Calcular GMD e período
+                      let gmd = 0
+                      let periodo = 0
+
+                      if (index === 0 && lote.peso_total_entrada && lote.quantidade_total) {
+                        // Primeira pesagem - compara com entrada
+                        const pesoInicial = lote.peso_total_entrada / lote.quantidade_total
+                        const ganho = pesagem.pesoMedio - pesoInicial
+                        const dataInicial = new Date(lote.data_entrada || lote.created_at)
+                        periodo = Math.max(1, Math.floor(
+                          (new Date(pesagem.data).getTime() - dataInicial.getTime()) / (1000 * 60 * 60 * 24)
+                        ))
+                        gmd = ganho / periodo
+                      } else if (index > 0) {
+                        // Demais pesagens - compara com anterior
+                        const pesagemAnterior = arr[index - 1]
+                        const ganho = pesagem.pesoMedio - pesagemAnterior.pesoMedio
+                        periodo = Math.max(1, Math.floor(
+                          (new Date(pesagem.data).getTime() - new Date(pesagemAnterior.data).getTime()) / (1000 * 60 * 60 * 24)
+                        ))
+                        gmd = ganho / periodo
+                      }
+
+                      return (
+                        <tr
+                          key={pesagem.data}
+                          className={`border-b border-border/50 hover:bg-muted/10 ${isLatest ? 'bg-primary/5' : ''}`}
+                        >
+                          <td className="p-3">
+                            <span className={`font-mono text-sm ${isLatest ? 'text-primary font-semibold' : ''}`}>
+                              {formatDate(pesagem.data)}
+                            </span>
+                            {isLatest && (
+                              <span className="ml-2 text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">Última</span>
+                            )}
+                          </td>
+                          <td className="text-center p-3 font-mono text-sm">{pesagem.qtdAnimais}</td>
+                          <td className="text-center p-3 font-mono text-sm font-semibold">{pesagem.pesoMedio.toFixed(1)} kg</td>
+                          <td className="text-center p-3 font-mono text-sm">{(pesagem.pesoTotal / 30).toFixed(1)} @</td>
+                          <td className="text-center p-3">
+                            {gmd !== 0 ? (
+                              <span className={`font-mono text-sm font-semibold ${
+                                gmd >= 1 ? 'text-success' :
+                                gmd >= 0.7 ? 'text-primary' :
+                                gmd >= 0.5 ? 'text-warning' : 'text-error'
+                              }`}>
+                                {gmd.toFixed(2)} kg
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
+                          <td className="text-center p-3 font-mono text-sm text-muted-foreground">{periodo} dias</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            {pesagensResumo.length > 6 && (
+            {pesagensResumo.length > 10 && (
               <Link href={`/dashboard/pesagens?lote=${id}`}>
                 <button className="w-full text-center text-primary hover:underline font-semibold py-2">
                   Ver todas as {pesagensResumo.length} pesagens →

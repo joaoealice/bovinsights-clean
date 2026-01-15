@@ -243,28 +243,22 @@ export default function ConferenciaAlimentar({
             </div>
           </div>
 
-          {/* Cards de Projeção de Ganho */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Cards de Projeção de Ganho - Quadrados lado a lado */}
+          <div className="grid grid-cols-3 gap-3">
             {/* p-GMDL - Ganho Médio Diário Lote */}
             {(() => {
               const gmdMedio = (configSistema.gmd_minimo + configSistema.gmd_maximo) / 2
               const gmdlKg = gmdMedio * quantidadeAnimais
               const gmdlArroba = gmdlKg / 30
               return (
-                <div className="bg-gradient-to-br from-success/10 to-success/5 rounded-lg p-4 border border-success/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">📈</span>
-                    <p className="text-xs text-muted-foreground font-semibold">p-GMDL</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-1">Ganho Diário do Lote</p>
-                  <p className="font-mono font-bold text-2xl text-success">
-                    {gmdlKg.toFixed(1)} kg
+                <div className="bg-gradient-to-br from-success/10 to-success/5 rounded-lg p-3 border border-success/30 aspect-square flex flex-col justify-center text-center">
+                  <p className="text-xs text-muted-foreground font-semibold mb-1">p-GMDL</p>
+                  <p className="font-mono font-bold text-xl md:text-2xl text-success">
+                    {gmdlKg.toFixed(1)}
                   </p>
+                  <p className="text-xs text-muted-foreground">kg/dia</p>
                   <p className="text-xs text-success font-medium mt-1">
-                    {gmdlArroba.toFixed(2)} @/dia
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    GMD {gmdMedio.toFixed(2)} × {quantidadeAnimais} cab
+                    {gmdlArroba.toFixed(2)} @
                   </p>
                 </div>
               )
@@ -276,20 +270,14 @@ export default function ConferenciaAlimentar({
               const gmumKg = gmdMedio * 31
               const gmumArroba = gmumKg / 30
               return (
-                <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">🐮</span>
-                    <p className="text-xs text-muted-foreground font-semibold">p-GMUM</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-1">Ganho Mensal/Animal</p>
-                  <p className="font-mono font-bold text-2xl text-primary">
-                    {gmumKg.toFixed(1)} kg
+                <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-3 border border-primary/30 aspect-square flex flex-col justify-center text-center">
+                  <p className="text-xs text-muted-foreground font-semibold mb-1">p-GMUM</p>
+                  <p className="font-mono font-bold text-xl md:text-2xl text-primary">
+                    {gmumKg.toFixed(1)}
                   </p>
+                  <p className="text-xs text-muted-foreground">kg/mês</p>
                   <p className="text-xs text-primary font-medium mt-1">
-                    {gmumArroba.toFixed(2)} @/mês
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    GMD {gmdMedio.toFixed(2)} × 31 dias
+                    {gmumArroba.toFixed(2)} @
                   </p>
                 </div>
               )
@@ -302,20 +290,14 @@ export default function ConferenciaAlimentar({
               const gltKg = gmumKg * quantidadeAnimais
               const gltArroba = gltKg / 30
               return (
-                <div className="bg-gradient-to-br from-accent/10 to-accent/5 rounded-lg p-4 border border-accent/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">💰</span>
-                    <p className="text-xs text-muted-foreground font-semibold">p-GLT</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-1">Ganho Total Lote/Mês</p>
-                  <p className="font-mono font-bold text-2xl text-accent">
-                    {(gltKg / 1000).toFixed(2)} ton
+                <div className="bg-gradient-to-br from-accent/10 to-accent/5 rounded-lg p-3 border border-accent/30 aspect-square flex flex-col justify-center text-center">
+                  <p className="text-xs text-muted-foreground font-semibold mb-1">p-GLT</p>
+                  <p className="font-mono font-bold text-xl md:text-2xl text-accent">
+                    {(gltKg / 1000).toFixed(2)}
                   </p>
+                  <p className="text-xs text-muted-foreground">ton/mês</p>
                   <p className="text-xs text-accent font-medium mt-1">
-                    {gltArroba.toFixed(1)} @/mês
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {gmumKg.toFixed(1)} kg × {quantidadeAnimais} cab
+                    {gltArroba.toFixed(1)} @
                   </p>
                 </div>
               )

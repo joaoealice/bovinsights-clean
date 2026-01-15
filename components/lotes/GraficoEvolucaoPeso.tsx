@@ -179,21 +179,21 @@ export default function GraficoEvolucaoPeso({
           <ComposedChart data={dadosGrafico} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="colorPeso" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="#22c55e" stopOpacity={0.05} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#6b7280" opacity={0.3} />
             <XAxis
               dataKey="dataFormatada"
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-              tickLine={{ stroke: 'hsl(var(--border))' }}
-              axisLine={{ stroke: 'hsl(var(--border))' }}
+              tick={{ fill: '#9ca3af', fontSize: 12 }}
+              tickLine={{ stroke: '#6b7280' }}
+              axisLine={{ stroke: '#6b7280' }}
             />
             <YAxis
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-              tickLine={{ stroke: 'hsl(var(--border))' }}
-              axisLine={{ stroke: 'hsl(var(--border))' }}
+              tick={{ fill: '#9ca3af', fontSize: 12 }}
+              tickLine={{ stroke: '#6b7280' }}
+              axisLine={{ stroke: '#6b7280' }}
               domain={['dataMin - 20', 'dataMax + 20']}
               tickFormatter={(value) => `${value}kg`}
             />
@@ -207,21 +207,21 @@ export default function GraficoEvolucaoPeso({
               fill="url(#colorPeso)"
             />
 
-            {/* Linha principal */}
+            {/* Linha principal - cor verde fixa para boa visibilidade */}
             <Line
               type="monotone"
               dataKey="pesoMedio"
-              stroke="hsl(var(--primary))"
+              stroke="#22c55e"
               strokeWidth={3}
               dot={{
-                fill: 'hsl(var(--primary))',
-                stroke: 'hsl(var(--background))',
+                fill: '#22c55e',
+                stroke: '#ffffff',
                 strokeWidth: 2,
                 r: 6
               }}
               activeDot={{
-                fill: 'hsl(var(--primary))',
-                stroke: 'hsl(var(--background))',
+                fill: '#16a34a',
+                stroke: '#ffffff',
                 strokeWidth: 3,
                 r: 8
               }}
@@ -231,11 +231,11 @@ export default function GraficoEvolucaoPeso({
             {pesoMedioInicial && (
               <ReferenceLine
                 y={pesoMedioInicial}
-                stroke="hsl(var(--muted-foreground))"
+                stroke="#f59e0b"
                 strokeDasharray="5 5"
                 label={{
                   value: `Entrada: ${pesoMedioInicial}kg`,
-                  fill: 'hsl(var(--muted-foreground))',
+                  fill: '#f59e0b',
                   fontSize: 11,
                   position: 'right'
                 }}
