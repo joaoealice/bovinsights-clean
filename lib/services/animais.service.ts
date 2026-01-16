@@ -227,15 +227,6 @@ export async function createAnimal(
     valorTotalCompra = Math.round(arrobas * data.preco_arroba_compra * 100) / 100
   }
 
-  // Calcular idade em meses se data de nascimento informada
-  let idadeMeses = data.idade_meses
-  if (data.data_nascimento && !idadeMeses) {
-    const nascimento = new Date(data.data_nascimento)
-    const hoje = new Date()
-    const diffTime = hoje.getTime() - nascimento.getTime()
-    idadeMeses = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30.44))
-  }
-
   const { data: animal, error } = await supabase
     .from('animais')
     .insert({
@@ -244,7 +235,7 @@ export async function createAnimal(
       peso_entrada: Math.round(data.peso_entrada * 10) / 10,
       peso_atual: Math.round(data.peso_entrada * 10) / 10, // Peso atual inicial = peso entrada
       valor_total_compra: valorTotalCompra,
-      idade_meses: idadeMeses,
+      idade_meses: data.idade_meses,
       status: data.status || 'Ativo'
     })
     .select()
@@ -635,35 +626,14 @@ export async function getTotalArrobasEstoque(precoArrobaAtual?: number): Promise
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Usuário não autenticado')
 
-  // Buscar animais cadastrados individualmente
-  const { data: animais } = await supabase
-    .from('animais')
-    .select('peso_atual')
-    .eq('usuario_id', user.id)
-    .eq('status', 'Ativo')
-
-  // Buscar lotes ativos para usar como fallback
+  // Total de arrobas em estoque vem SEMPRE dos LOTES
+  // Animais individuais são apenas para identificação/rastreamento dentro do lote
   const { data: lotes } = await supabase
     .from('lotes')
     .select('quantidade_total, peso_total_entrada')
     .eq('usuario_id', user.id)
     .eq('status', 'ativo')
 
-  // Se há animais cadastrados, usar os dados deles
-  if (animais && animais.length > 0) {
-    const totalKg = animais.reduce((sum, a) => sum + (a.peso_atual || 0), 0)
-    const totalArrobas = totalKg / 30
-    const valorEstimado = precoArrobaAtual ? totalArrobas * precoArrobaAtual : 0
-
-    return {
-      total_arrobas: Math.round(totalArrobas * 100) / 100,
-      total_kg: Math.round(totalKg * 10) / 10,
-      total_animais: animais.length,
-      valor_estimado: Math.round(valorEstimado * 100) / 100
-    }
-  }
-
-  // Se não há animais cadastrados, usar dados dos lotes
   if (lotes && lotes.length > 0) {
     const totalAnimaisLotes = lotes.reduce((sum, l) => sum + (l.quantidade_total || 0), 0)
     const totalKgLotes = lotes.reduce((sum, l) => sum + (l.peso_total_entrada || 0), 0)

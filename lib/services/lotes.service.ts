@@ -41,6 +41,8 @@ export interface LoteWithStats extends Lote {
   total_animais: number
   peso_medio: number
   ocupacao_percentual: number
+  total_arrobas: number
+  data_ultima_pesagem: string | null
 }
 
 // Interface para dados do piquete vinculado
@@ -63,7 +65,7 @@ export interface LoteWithPiquete extends LoteWithStats {
 // Listar todos os lotes do usuário
 export async function getLotes(): Promise<LoteWithStats[]> {
   const supabase = createClient()
-  
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Usuário não autenticado')
 
@@ -77,6 +79,24 @@ export async function getLotes(): Promise<LoteWithStats[]> {
     .order('created_at', { ascending: false })
 
   if (error) throw error
+
+  // Buscar última pesagem de cada lote
+  const lotesIds = lotes.map((l: any) => l.id)
+  const { data: pesagensLote } = await supabase
+    .from('pesagens_lote')
+    .select('lote_id, data_pesagem')
+    .in('lote_id', lotesIds)
+    .order('data_pesagem', { ascending: false })
+
+  // Criar mapa de última pesagem por lote
+  const ultimaPesagemPorLote: Record<string, string> = {}
+  if (pesagensLote) {
+    pesagensLote.forEach((p: any) => {
+      if (!ultimaPesagemPorLote[p.lote_id]) {
+        ultimaPesagemPorLote[p.lote_id] = p.data_pesagem
+      }
+    })
+  }
 
   // Calcular estatísticas
   // O LOTE é o eixo central - quantidade_total e peso_medio_animal do lote são a referência principal
@@ -102,12 +122,18 @@ export async function getLotes(): Promise<LoteWithStats[]> {
       ? (totalAnimais / lote.capacidade_maxima) * 100
       : 0
 
+    // Calcular peso total e arrobas (1 arroba = 15kg para bovinos)
+    const pesoTotal = pesoMedio * totalAnimais
+    const totalArrobas = pesoTotal / 15
+
     return {
       ...lote,
       animais: undefined,
       total_animais: totalAnimais,
       peso_medio: Math.round(pesoMedio * 10) / 10,
-      ocupacao_percentual: Math.round(ocupacao)
+      ocupacao_percentual: Math.round(ocupacao),
+      total_arrobas: Math.round(totalArrobas * 10) / 10,
+      data_ultima_pesagem: ultimaPesagemPorLote[lote.id] || null
     }
   })
 }
@@ -355,7 +381,7 @@ export const criarAnimaisFaltantes = criarAnimaisIdentificados
 // Buscar lotes com filtros
 export async function searchLotes(query: string, status?: string): Promise<LoteWithStats[]> {
   const supabase = createClient()
-  
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Usuário não autenticado')
 
@@ -378,6 +404,24 @@ export async function searchLotes(query: string, status?: string): Promise<LoteW
   const { data: lotes, error } = await queryBuilder.order('created_at', { ascending: false })
 
   if (error) throw error
+
+  // Buscar última pesagem de cada lote
+  const lotesIds = lotes.map((l: any) => l.id)
+  const { data: pesagensLote } = await supabase
+    .from('pesagens_lote')
+    .select('lote_id, data_pesagem')
+    .in('lote_id', lotesIds)
+    .order('data_pesagem', { ascending: false })
+
+  // Criar mapa de última pesagem por lote
+  const ultimaPesagemPorLote: Record<string, string> = {}
+  if (pesagensLote) {
+    pesagensLote.forEach((p: any) => {
+      if (!ultimaPesagemPorLote[p.lote_id]) {
+        ultimaPesagemPorLote[p.lote_id] = p.data_pesagem
+      }
+    })
+  }
 
   // O LOTE é o eixo central - quantidade_total e peso_medio_animal do lote são a referência principal
   return lotes.map((lote: any) => {
@@ -402,12 +446,18 @@ export async function searchLotes(query: string, status?: string): Promise<LoteW
       ? (totalAnimais / lote.capacidade_maxima) * 100
       : 0
 
+    // Calcular peso total e arrobas (1 arroba = 15kg para bovinos)
+    const pesoTotal = pesoMedio * totalAnimais
+    const totalArrobas = pesoTotal / 15
+
     return {
       ...lote,
       animais: undefined,
       total_animais: totalAnimais,
       peso_medio: Math.round(pesoMedio * 10) / 10,
-      ocupacao_percentual: Math.round(ocupacao)
+      ocupacao_percentual: Math.round(ocupacao),
+      total_arrobas: Math.round(totalArrobas * 10) / 10,
+      data_ultima_pesagem: ultimaPesagemPorLote[lote.id] || null
     }
   })
 }
