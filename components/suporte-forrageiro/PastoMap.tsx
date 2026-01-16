@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// Interface para geometria do pasto (preparada para uso futuro)
+// Interface para geometria do pasto
 export interface PastoGeometry {
   coordinates: [number, number][] // [lat, lng]
   bbox: [number, number, number, number] // [minLng, minLat, maxLng, maxLat]
@@ -12,7 +12,6 @@ export interface PastoGeometry {
   areaHectares: number
   perimetroKm: number
   pontos: number
-  // Preparado para uso futuro
   geojson: {
     type: 'Polygon'
     coordinates: [number, number][][] // GeoJSON format [lng, lat]
@@ -22,7 +21,6 @@ export interface PastoGeometry {
 interface PastoMapProps {
   onPolygonDrawn: (geometry: PastoGeometry) => void
   onClearPolygon: () => void
-  fullscreenOnDraw?: boolean // Ativa modo fullscreen ao desenhar
 }
 
 // Definição das camadas disponíveis
@@ -68,27 +66,22 @@ type InputMode = 'desenho' | 'coordenadas'
 function calcularAreaHectares(coords: [number, number][]): number {
   if (coords.length < 3) return 0
 
-  // Fórmula de Shoelace com correção para latitude
   let area = 0
   const n = coords.length
-
-  // Usar a latitude média para correção
   const latMedia = coords.reduce((sum, c) => sum + c[0], 0) / n
   const correcaoLat = Math.cos(latMedia * Math.PI / 180)
 
   for (let i = 0; i < n; i++) {
     const j = (i + 1) % n
-    // coords[i] = [lat, lng]
-    const x1 = coords[i][1] * correcaoLat * 111.32 // lng em km
-    const y1 = coords[i][0] * 111.32 // lat em km
+    const x1 = coords[i][1] * correcaoLat * 111.32
+    const y1 = coords[i][0] * 111.32
     const x2 = coords[j][1] * correcaoLat * 111.32
     const y2 = coords[j][0] * 111.32
-
     area += x1 * y2 - x2 * y1
   }
 
   area = Math.abs(area) / 2
-  return area * 100 // km² para hectares
+  return area * 100
 }
 
 function calcularPerimetro(coords: [number, number][]): number {
@@ -104,12 +97,11 @@ function calcularPerimetro(coords: [number, number][]): number {
     const dLat = lat2 - lat1
     const dLng = (coords[j][1] - coords[i][1]) * Math.PI / 180
 
-    // Fórmula de Haversine
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
               Math.cos(lat1) * Math.cos(lat2) *
               Math.sin(dLng/2) * Math.sin(dLng/2)
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-    perimetro += 6371 * c // Raio da Terra em km
+    perimetro += 6371 * c
   }
 
   return perimetro
@@ -117,28 +109,23 @@ function calcularPerimetro(coords: [number, number][]): number {
 
 function calcularCentroide(coords: [number, number][]): [number, number] {
   if (coords.length === 0) return [0, 0]
-
   const sumLat = coords.reduce((sum, c) => sum + c[0], 0)
   const sumLng = coords.reduce((sum, c) => sum + c[1], 0)
-
   return [sumLat / coords.length, sumLng / coords.length]
 }
 
 function calcularBbox(coords: [number, number][]): [number, number, number, number] {
   if (coords.length === 0) return [0, 0, 0, 0]
-
   const lats = coords.map(c => c[0])
   const lngs = coords.map(c => c[1])
-
   return [
-    Math.min(...lngs), // minLng (west)
-    Math.min(...lats), // minLat (south)
-    Math.max(...lngs), // maxLng (east)
-    Math.max(...lats), // maxLat (north)
+    Math.min(...lngs),
+    Math.min(...lats),
+    Math.max(...lngs),
+    Math.max(...lats),
   ]
 }
 
-// Verificar se duas linhas se intersectam
 function linhasIntersectam(
   p1: [number, number], p2: [number, number],
   p3: [number, number], p4: [number, number]
@@ -146,52 +133,42 @@ function linhasIntersectam(
   const ccw = (A: [number, number], B: [number, number], C: [number, number]) => {
     return (C[0] - A[0]) * (B[1] - A[1]) > (B[0] - A[0]) * (C[1] - A[1])
   }
-
   return ccw(p1, p3, p4) !== ccw(p2, p3, p4) && ccw(p1, p2, p3) !== ccw(p1, p2, p4)
 }
 
-// Verificar autointerseção do polígono
 function temAutoIntersecao(coords: [number, number][]): boolean {
   const n = coords.length
   if (n < 4) return false
 
   for (let i = 0; i < n; i++) {
     for (let j = i + 2; j < n; j++) {
-      // Não verificar linhas adjacentes
       if (i === 0 && j === n - 1) continue
-
       const p1 = coords[i]
       const p2 = coords[(i + 1) % n]
       const p3 = coords[j]
       const p4 = coords[(j + 1) % n]
-
       if (linhasIntersectam(p1, p2, p3, p4)) {
         return true
       }
     }
   }
-
   return false
 }
 
-// Converter para GeoJSON (formato [lng, lat])
 function toGeoJSON(coords: [number, number][]): { type: 'Polygon'; coordinates: [number, number][][] } {
-  // GeoJSON usa [lng, lat], nosso formato é [lat, lng]
   const geoCoords = coords.map(c => [c[1], c[0]] as [number, number])
-  // Fechar o polígono se necessário
   if (geoCoords.length > 0 &&
       (geoCoords[0][0] !== geoCoords[geoCoords.length - 1][0] ||
        geoCoords[0][1] !== geoCoords[geoCoords.length - 1][1])) {
     geoCoords.push([...geoCoords[0]] as [number, number])
   }
-
   return {
     type: 'Polygon',
     coordinates: [geoCoords]
   }
 }
 
-export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnDraw = true }: PastoMapProps) {
+export default function PastoMap({ onPolygonDrawn, onClearPolygon }: PastoMapProps) {
   const mapRef = useRef<L.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const baseLayerRef = useRef<L.TileLayer | null>(null)
@@ -209,14 +186,13 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
   const [activeLayer, setActiveLayer] = useState<MapLayerKey>('mapa')
   const [inputMode, setInputMode] = useState<InputMode>('desenho')
   const [currentGeometry, setCurrentGeometry] = useState<PastoGeometry | null>(null)
-  const [isFullscreen, setIsFullscreen] = useState(false)
 
   // Estados para busca de localização
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState('')
 
-  // Estados para coordenadas manuais (busca)
+  // Estados para coordenadas manuais
   const [manualLat, setManualLat] = useState('')
   const [manualLng, setManualLng] = useState('')
   const [showManualInput, setShowManualInput] = useState(false)
@@ -225,7 +201,6 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
   const [coordenadasTexto, setCoordenadasTexto] = useState('')
   const [coordenadasErro, setCoordenadasErro] = useState('')
   const [coordenadasLista, setCoordenadasLista] = useState<[number, number][]>([])
-  const [editandoPonto, setEditandoPonto] = useState<number | null>(null)
 
   // Inicializar mapa
   useEffect(() => {
@@ -252,7 +227,7 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
     }
   }, [])
 
-  // Função para trocar camada do mapa
+  // Trocar camada do mapa
   const changeMapLayer = useCallback((layerKey: MapLayerKey) => {
     if (!mapRef.current) return
 
@@ -286,21 +261,16 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
     setActiveLayer(layerKey)
   }, [])
 
-  // Criar geometria a partir das coordenadas
+  // Criar geometria
   const criarGeometria = useCallback((coords: [number, number][]): PastoGeometry | null => {
     if (coords.length < 4) return null
 
-    const area = calcularAreaHectares(coords)
-    const perimetro = calcularPerimetro(coords)
-    const centroid = calcularCentroide(coords)
-    const bbox = calcularBbox(coords)
-
     return {
       coordinates: coords,
-      bbox,
-      centroid,
-      areaHectares: Math.round(area * 100) / 100,
-      perimetroKm: Math.round(perimetro * 100) / 100,
+      bbox: calcularBbox(coords),
+      centroid: calcularCentroide(coords),
+      areaHectares: Math.round(calcularAreaHectares(coords) * 100) / 100,
+      perimetroKm: Math.round(calcularPerimetro(coords) * 100) / 100,
       pontos: coords.length,
       geojson: toGeoJSON(coords)
     }
@@ -312,21 +282,17 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
 
     const map = mapRef.current
 
-    // Remover polígono anterior
     if (polygonRef.current) {
       map.removeLayer(polygonRef.current)
     }
 
-    // Remover marcadores anteriores
     markersRef.current.forEach(m => map.removeLayer(m))
     markersRef.current = []
 
-    // Remover label de área anterior
     if (areaLabelRef.current) {
       map.removeLayer(areaLabelRef.current)
     }
 
-    // Criar polígono
     const latLngs = coords.map(c => L.latLng(c[0], c[1]))
     const polygon = L.polygon(latLngs, {
       color: '#16a34a',
@@ -337,7 +303,6 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
 
     polygonRef.current = polygon
 
-    // Adicionar marcadores editáveis nos vértices
     coords.forEach((coord, index) => {
       const marker = L.circleMarker([coord[0], coord[1]], {
         radius: 8,
@@ -347,7 +312,6 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
         weight: 3,
       }).addTo(map)
 
-      // Adicionar número do ponto
       marker.bindTooltip(`P${index + 1}`, {
         permanent: false,
         direction: 'top',
@@ -357,7 +321,6 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
       markersRef.current.push(marker)
     })
 
-    // Calcular e mostrar área no centro
     const geometry = criarGeometria(coords)
     if (geometry) {
       const areaLabel = L.marker(geometry.centroid, {
@@ -375,13 +338,11 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
       setCurrentGeometry(geometry)
     }
 
-    // Centralizar mapa no polígono
     if (centralizar) {
       try {
         const bounds = polygon.getBounds()
         map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 })
       } catch (e) {
-        // Ignorar erros de zoom
         if (geometry) {
           map.setView(geometry.centroid, 14)
         }
@@ -401,13 +362,9 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
     }
 
     try {
-      // Tentar parsear como JSON primeiro
       let coords: [number, number][] = []
-
-      // Limpar texto e tentar diferentes formatos
       const texto = coordenadasTexto.trim()
 
-      // Formato 1: JSON array [[lat, lng], [lat, lng], ...]
       if (texto.startsWith('[')) {
         const parsed = JSON.parse(texto)
         if (Array.isArray(parsed)) {
@@ -419,10 +376,8 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
           })
         }
       } else {
-        // Formato 2: Linhas separadas (lat, lng ou lat lng)
         const linhas = texto.split('\n').filter(l => l.trim())
         coords = linhas.map((linha, idx) => {
-          // Aceitar vírgula, espaço, tab ou ponto-e-vírgula como separador
           const partes = linha.trim().split(/[,\s\t;]+/).filter(p => p)
 
           if (partes.length < 2) {
@@ -448,19 +403,16 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
         })
       }
 
-      // Validações
       if (coords.length < 4) {
         setCoordenadasErro(`Mínimo de 4 pontos necessários. Você inseriu ${coords.length}.`)
         return
       }
 
-      // Verificar autointerseção
       if (temAutoIntersecao(coords)) {
         setCoordenadasErro('O polígono tem linhas que se cruzam. Verifique a ordem dos pontos.')
         return
       }
 
-      // Sucesso - desenhar polígono
       setCoordenadasLista(coords)
       desenharPoligono(coords)
 
@@ -473,43 +425,6 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
       setCoordenadasErro(e.message || 'Erro ao processar coordenadas')
     }
   }, [coordenadasTexto, desenharPoligono, criarGeometria, onPolygonDrawn])
-
-  // Adicionar ponto manualmente
-  const adicionarPonto = useCallback(() => {
-    const lat = parseFloat(manualLat.replace(',', '.'))
-    const lng = parseFloat(manualLng.replace(',', '.'))
-
-    if (isNaN(lat) || isNaN(lng)) {
-      setSearchError('Coordenadas inválidas')
-      return
-    }
-
-    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-      setSearchError('Coordenadas fora do intervalo válido')
-      return
-    }
-
-    const novaLista = [...coordenadasLista, [lat, lng] as [number, number]]
-    setCoordenadasLista(novaLista)
-    setManualLat('')
-    setManualLng('')
-    setSearchError('')
-
-    // Atualizar texto
-    const novoTexto = novaLista.map(c => `${c[0]}, ${c[1]}`).join('\n')
-    setCoordenadasTexto(novoTexto)
-
-    // Se tiver 4+ pontos, desenhar
-    if (novaLista.length >= 4) {
-      if (!temAutoIntersecao(novaLista)) {
-        desenharPoligono(novaLista)
-        const geometry = criarGeometria(novaLista)
-        if (geometry) {
-          onPolygonDrawn(geometry)
-        }
-      }
-    }
-  }, [manualLat, manualLng, coordenadasLista, desenharPoligono, criarGeometria, onPolygonDrawn])
 
   // Remover ponto da lista
   const removerPonto = useCallback((index: number) => {
@@ -530,7 +445,7 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
     }
   }, [coordenadasLista, desenharPoligono, criarGeometria, onPolygonDrawn])
 
-  // Função para ir até uma localização
+  // Ir até uma localização
   const goToLocation = useCallback((lat: number, lng: number, zoom: number = 15) => {
     if (!mapRef.current) return
 
@@ -580,7 +495,7 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
     }
   }
 
-  // Ir para coordenadas manuais (busca)
+  // Ir para coordenadas manuais
   const goToManualCoordinates = () => {
     const lat = parseFloat(manualLat.replace(',', '.'))
     const lng = parseFloat(manualLng.replace(',', '.'))
@@ -600,7 +515,7 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
     setShowManualInput(false)
   }
 
-  // Função para limpar o desenho
+  // Limpar o desenho
   const clearDrawing = useCallback(() => {
     if (!mapRef.current) return
 
@@ -639,35 +554,24 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
   const startDrawing = () => {
     clearDrawing()
     setIsDrawing(true)
-    if (fullscreenOnDraw) {
-      setIsFullscreen(true)
-    }
   }
 
-  // Sair do modo fullscreen
-  const exitFullscreen = () => {
-    setIsFullscreen(false)
-  }
-
-  // Finalizar polígono (modo desenho)
+  // Finalizar polígono
   const finishPolygon = useCallback(() => {
     if (!mapRef.current || pointsRef.current.length < 4) return
 
     const coords: [number, number][] = pointsRef.current.map(p => [p.lat, p.lng])
 
-    // Verificar autointerseção
     if (temAutoIntersecao(coords)) {
       setSearchError('O polígono tem linhas que se cruzam. Limpe e desenhe novamente.')
       return
     }
 
-    // Remover linha temporária
     if (tempLineRef.current) {
       mapRef.current.removeLayer(tempLineRef.current)
       tempLineRef.current = null
     }
 
-    // Remover marcadores de desenho
     markersRef.current.forEach(m => mapRef.current?.removeLayer(m))
     markersRef.current = []
 
@@ -683,10 +587,9 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
 
     setIsDrawing(false)
     setHasPolygon(true)
-    setIsFullscreen(false) // Sair do fullscreen ao finalizar
   }, [desenharPoligono, criarGeometria, onPolygonDrawn])
 
-  // Configurar eventos de clique no mapa
+  // Eventos de clique no mapa
   useEffect(() => {
     if (!mapRef.current) return
 
@@ -754,190 +657,6 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon, fullscreenOnD
       mapRef.current.doubleClickZoom.enable()
     }
   }, [isDrawing])
-
-  // Invalidar tamanho do mapa quando fullscreen mudar
-  useEffect(() => {
-    if (!mapRef.current) return
-
-    // Pequeno delay para garantir que o CSS foi aplicado
-    const timer = setTimeout(() => {
-      mapRef.current?.invalidateSize()
-    }, 100)
-
-    // Bloquear scroll do body quando em fullscreen
-    if (isFullscreen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-
-    return () => {
-      clearTimeout(timer)
-      document.body.style.overflow = ''
-    }
-  }, [isFullscreen])
-
-  // Conteúdo do mapa (reutilizado em modo normal e fullscreen)
-  const mapContent = (
-    <>
-      {/* Seletor de camadas */}
-      <div className="absolute top-4 left-4 z-[1000]">
-        <div className="bg-card border border-border rounded-lg shadow-lg overflow-hidden">
-          <p className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/50 border-b border-border">
-            Tipo de Mapa
-          </p>
-          <div className="p-1">
-            {(Object.keys(MAP_LAYERS) as MapLayerKey[]).map((layerKey) => {
-              const layer = MAP_LAYERS[layerKey]
-              const isActive = activeLayer === layerKey
-              return (
-                <button
-                  key={layerKey}
-                  onClick={() => changeMapLayer(layerKey)}
-                  className={`w-full flex items-center gap-2 px-3 py-2 rounded text-sm font-medium transition-all ${
-                    isActive
-                      ? 'bg-primary text-white'
-                      : 'text-foreground hover:bg-muted/50'
-                  }`}
-                >
-                  <span>{layer.icon}</span>
-                  <span>{layer.name}</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Controles de desenho (botão Limpar) */}
-      {inputMode === 'desenho' && hasPolygon && (
-            <button
-              onClick={clearDrawing}
-              className="absolute top-4 right-4 z-[1000] bg-error hover:bg-error/90 text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all flex items-center gap-2"
-            >
-              <span>🗑️</span>
-              Limpar
-            </button>
-          )}
-
-      {/* Informações do polígono */}
-      {currentGeometry && (
-        <div className="absolute bottom-4 left-4 right-4 z-[1000] bg-card/95 border border-border rounded-lg p-3">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <div>
-                <p className="text-xs text-muted-foreground">Área</p>
-                <p className="font-display text-lg text-primary">{currentGeometry.areaHectares.toFixed(2)} ha</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Perímetro</p>
-                <p className="font-display text-lg">{currentGeometry.perimetroKm.toFixed(2)} km</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Pontos</p>
-                <p className="font-display text-lg">{currentGeometry.pontos}</p>
-              </div>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              ✅ Geometria válida e pronta para análise
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Instrução inicial (somente no modo normal) */}
-      {!isDrawing && !hasPolygon && inputMode === 'desenho' && !isFullscreen && (
-        <div className="absolute bottom-4 left-4 right-4 z-[1000] bg-card/95 border border-border rounded-lg p-3 text-center">
-          <p className="text-sm text-muted-foreground">
-            <strong>1.</strong> Busque sua localização | <strong>2.</strong> Escolha o tipo de mapa | <strong>3.</strong> Clique em "Desenhar Pasto"
-          </p>
-        </div>
-      )}
-    </>
-  )
-
-  // Modal fullscreen para desenho
-  if (isFullscreen) {
-    return (
-      <>
-        {/* Placeholder para manter o espaço quando em fullscreen */}
-        <div className="space-y-4">
-          <div className="card-leather p-4 text-center">
-            <p className="text-muted-foreground">
-              Modo de desenho em tela cheia ativo...
-            </p>
-          </div>
-        </div>
-
-        {/* Modal Fullscreen */}
-        <div className="fixed inset-0 z-[9999] bg-background">
-          {/* Header do fullscreen */}
-          <div className="absolute top-0 left-0 right-0 z-[10001] bg-card/95 backdrop-blur-sm border-b border-border p-4">
-            <div className="flex items-center justify-between max-w-screen-xl mx-auto">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">🗺️</span>
-                <div>
-                  <h2 className="font-display text-xl">Desenhar Área do Piquete</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Clique no mapa para marcar os pontos. Mínimo 4 pontos. Duplo clique para finalizar.
-                  </p>
-                </div>
-              </div>
-              {isDrawing && (
-                <div className="bg-card border border-border rounded-lg p-3 shadow-lg flex flex-col gap-2">
-                  <p className="text-sm text-foreground">
-                    Clique para adicionar pontos
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {pointCount < 4
-                      ? `Faltam ${4 - pointCount} pontos (mín. 4)`
-                      : `${pointCount} pontos - pode finalizar`}
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={finishPolygon}
-                      disabled={pointCount < 4}
-                      className="flex-1 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-white font-bold px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2"
-                    >
-                      Finalizar
-                    </button>
-                    <button
-                      onClick={() => {
-                        clearDrawing()
-                        setIsFullscreen(false)
-                      }}
-                      className="px-3 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg text-sm transition-all flex items-center gap-2"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              )}
-              <button
-                onClick={() => {
-                  clearDrawing()
-                  setIsFullscreen(false)
-                }}
-                className="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-lg transition-all flex items-center gap-2"
-              >
-                <span>✕</span>
-                Sair
-              </button>
-            </div>
-          </div>
-
-          {/* Mapa fullscreen */}
-          <div
-            ref={mapContainerRef}
-            className="absolute inset-0 top-[72px]"
-            style={{ cursor: isDrawing ? 'crosshair' : 'grab' }}
-          />
-
-          {mapContent}
-        </div>
-      </>
-    )
-  }
 
   return (
     <div className="space-y-4">
@@ -1130,21 +849,59 @@ Ou formato JSON: [[-23.5505, -46.6333], [-23.5510, -46.6340], ...]`}
 
         {/* Modo: Desenho */}
         {inputMode === 'desenho' && (
-          <>
+          <div className="space-y-3">
             {!isDrawing && !hasPolygon && (
               <button
                 onClick={startDrawing}
-                className="bg-primary hover:bg-primary/90 text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all flex items-center gap-2 mt-4"
+                className="bg-primary hover:bg-primary/90 text-white font-bold px-6 py-3 rounded-lg shadow-lg transition-all flex items-center gap-2"
               >
                 <span>✏️</span>
-                Desenhar Pasto
+                Iniciar Desenho
               </button>
             )}
-            <p className="text-sm text-muted-foreground mt-2">
-              Use o botão "Desenhar Pasto" no mapa para marcar os pontos do perímetro.
-              <strong> Mínimo 4 pontos.</strong> Duplo clique para finalizar.
+
+            {isDrawing && (
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="bg-primary/10 border border-primary/30 rounded-lg px-4 py-2">
+                  <span className="text-sm font-medium text-primary">
+                    {pointCount} {pointCount === 1 ? 'ponto' : 'pontos'} marcados
+                    {pointCount < 4 && ` (mínimo 4)`}
+                  </span>
+                </div>
+                <button
+                  onClick={finishPolygon}
+                  disabled={pointCount < 4}
+                  className="bg-success hover:bg-success/90 disabled:bg-muted disabled:cursor-not-allowed text-white font-bold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+                >
+                  <span>✓</span>
+                  Finalizar
+                </button>
+                <button
+                  onClick={clearDrawing}
+                  className="bg-error hover:bg-error/90 text-white font-bold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+                >
+                  <span>✕</span>
+                  Cancelar
+                </button>
+              </div>
+            )}
+
+            {hasPolygon && (
+              <button
+                onClick={clearDrawing}
+                className="bg-error hover:bg-error/90 text-white font-bold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+              >
+                <span>🗑️</span>
+                Limpar e Redesenhar
+              </button>
+            )}
+
+            <p className="text-sm text-muted-foreground">
+              {isDrawing
+                ? 'Clique no mapa para marcar os pontos. Duplo clique ou botão "Finalizar" para concluir.'
+                : 'Clique em "Iniciar Desenho" e marque os pontos no mapa. Mínimo 4 pontos.'}
             </p>
-          </>
+          </div>
         )}
       </div>
 
@@ -1156,7 +913,68 @@ Ou formato JSON: [[-23.5505, -46.6333], [-23.5510, -46.6340], ...]`}
           style={{ cursor: isDrawing ? 'crosshair' : 'grab' }}
         />
 
-        {mapContent}
+        {/* Seletor de camadas */}
+        <div className="absolute top-4 left-4 z-[1000]">
+          <div className="bg-card border border-border rounded-lg shadow-lg overflow-hidden">
+            <p className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/50 border-b border-border">
+              Tipo de Mapa
+            </p>
+            <div className="p-1">
+              {(Object.keys(MAP_LAYERS) as MapLayerKey[]).map((layerKey) => {
+                const layer = MAP_LAYERS[layerKey]
+                const isActive = activeLayer === layerKey
+                return (
+                  <button
+                    key={layerKey}
+                    onClick={() => changeMapLayer(layerKey)}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-primary text-white'
+                        : 'text-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    <span>{layer.icon}</span>
+                    <span>{layer.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Informações do polígono */}
+        {currentGeometry && (
+          <div className="absolute bottom-4 left-4 right-4 z-[1000] bg-card/95 border border-border rounded-lg p-3">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Área</p>
+                  <p className="font-display text-lg text-primary">{currentGeometry.areaHectares.toFixed(2)} ha</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Perímetro</p>
+                  <p className="font-display text-lg">{currentGeometry.perimetroKm.toFixed(2)} km</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Pontos</p>
+                  <p className="font-display text-lg">{currentGeometry.pontos}</p>
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                ✅ Geometria válida e pronta para salvar
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Instrução inicial */}
+        {!isDrawing && !hasPolygon && inputMode === 'desenho' && (
+          <div className="absolute bottom-4 left-4 right-4 z-[1000] bg-card/95 border border-border rounded-lg p-3 text-center">
+            <p className="text-sm text-muted-foreground">
+              <strong>1.</strong> Busque sua localização | <strong>2.</strong> Escolha o tipo de mapa | <strong>3.</strong> Clique em "Iniciar Desenho"
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
