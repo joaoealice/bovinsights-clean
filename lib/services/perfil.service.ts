@@ -21,6 +21,9 @@ export interface PerfilUsuario {
   latitude: number | null
   longitude: number | null
   coordenadas_atualizadas_em: string | null
+  onboarding_completed: boolean | null
+  quick_tour_completed: boolean | null
+  quick_tour_skipped: boolean | null
   created_at: string
   updated_at: string
 }
@@ -244,6 +247,60 @@ export async function getPerfilCompleto(): Promise<PerfilCompleto> {
   const fazenda = await getPerfilFazenda()
 
   return { usuario, fazenda }
+}
+
+// Marcar que o onboarding foi concluído
+export async function marcarOnboardingConcluido(): Promise<PerfilUsuario> {
+  const supabase = createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Usuário não autenticado')
+
+  const { data, error } = await supabase
+    .from('perfil_usuario')
+    .update({ onboarding_completed: true })
+    .eq('usuario_id', user.id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as PerfilUsuario
+}
+
+// Marcar que o quick tour foi concluído
+export async function marcarQuickTourConcluido(): Promise<PerfilUsuario> {
+  const supabase = createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Usuário não autenticado')
+
+  const { data, error } = await supabase
+    .from('perfil_usuario')
+    .update({ quick_tour_completed: true, quick_tour_skipped: false })
+    .eq('usuario_id', user.id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as PerfilUsuario
+}
+
+// Marcar que o quick tour foi pulado
+export async function marcarQuickTourPulado(): Promise<PerfilUsuario> {
+  const supabase = createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Usuário não autenticado')
+
+  const { data, error } = await supabase
+    .from('perfil_usuario')
+    .update({ quick_tour_skipped: true, quick_tour_completed: false })
+    .eq('usuario_id', user.id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as PerfilUsuario
 }
 
 // Upload de foto de perfil

@@ -139,7 +139,7 @@ export default function DashboardLayoutClient({
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3">
             <Image
-              src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20(2).png"
+              src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo%20(1).svg"
               alt="Bovinsights"
               width={200}
               height={50}
@@ -194,7 +194,7 @@ export default function DashboardLayoutClient({
           <div className="flex items-center justify-between px-8 py-4">
             <div className="flex items-center gap-6">
               <Image
-                src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20(2).png"
+                src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo%20(1).svg"
                 alt="Bovinsights"
                 width={140}
                 height={35}

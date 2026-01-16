@@ -23,10 +23,10 @@ export default function DashboardPage() {
       </section>
 
       {/* KPIs Dinâmicos */}
-      <KPIsCard />
+      <KPIsCard id="indicadores" />
 
       {/* Acesso Rapido */}
-      <section>
+      <section id="historico">
         <h3 className="font-display text-2xl mb-4">ACESSO RAPIDO</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Link href="/dashboard/lotes/novo" className="card-leather p-6 hover:scale-105 transition-all text-center group">

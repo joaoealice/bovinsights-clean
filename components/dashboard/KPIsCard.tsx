@@ -16,7 +16,11 @@ interface KPIData {
   variacaoCusto: number
 }
 
-export default function KPIsCard() {
+interface KPIsCardProps {
+  id?: string
+}
+
+export default function KPIsCard({ id }: KPIsCardProps) {
   const [data, setData] = useState<KPIData>({
     totalAnimais: 0,
     totalLotes: 0,
@@ -153,7 +157,7 @@ export default function KPIsCard() {
 
   if (loading) {
     return (
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <section id={id} className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="card-leather p-4 md:p-6 animate-pulse">
             <div className="h-10 bg-muted/30 rounded mb-4"></div>
@@ -166,7 +170,7 @@ export default function KPIsCard() {
   }
 
   return (
-    <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <section id={id} className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {kpis.map((kpi, i) => (
         <div
           key={i}

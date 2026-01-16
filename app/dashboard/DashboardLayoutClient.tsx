@@ -6,6 +6,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import NotificacoesDropdown from '@/components/layout/NotificacoesDropdown'
+import WelcomePage from '@/components/onboarding/WelcomePage'
+import QuickTour, { TourStep } from '@/components/onboarding/QuickTour'
+import { getPerfilCompleto, getPerfilFazenda, criarPerfilFazenda, marcarOnboardingConcluido, marcarQuickTourConcluido, marcarQuickTourPulado } from '@/lib/services/perfil.service'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -14,6 +17,75 @@ interface DashboardLayoutClientProps {
   initialUserName: string
   initialFarmName: string
 }
+
+const tourSteps: TourStep[] = [
+    {
+      target: '#dashboard',
+      title: 'Seu painel de controle',
+      text: 'Aqui você acompanha, de forma simples, a situação dos seus lotes, indicadores e alertas do dia a dia.',
+      placement: 'bottom',
+    },
+    {
+      target: '#menu-lotes',
+      title: 'Gestão dos seus lotes',
+      text: 'É aqui que você cadastra e acompanha cada lote, com quantidade de animais, peso médio e sistema de criação.',
+      placement: 'right',
+    },
+    {
+      target: '#indicadores',
+      title: 'Indicadores que ajudam a decidir',
+      text: 'O sistema transforma dados do campo em números fáceis de entender para apoiar suas decisões.',
+      placement: 'bottom',
+    },
+    {
+      target: '#historico',
+      title: 'Histórico sempre organizado',
+      text: 'Pesagens, movimentações e registros ficam salvos para acompanhar a evolução do gado ao longo do tempo.',
+      placement: 'top',
+    },
+    {
+      target: '#menu-ajuda',
+      title: 'Sempre que precisar',
+      text: 'Você pode rever esse tour ou acessar ajuda sempre que quiser.',
+      placement: 'top',
+    },
+  ];
+
+type MenuItem = {
+  icon: string;
+  label: string;
+  href: string;
+  subItems?: MenuItem[]; // Optional sub-items
+};
+
+const menuItems: MenuItem[] = [
+    { icon: '📊', label: 'Dashboard', href: '/dashboard' },
+    { icon: '🐮', label: 'Animais', href: '/dashboard/animais' },
+    {
+      icon: '📍',
+      label: 'Lote',
+      href: '/dashboard/lotes', // Parent link for Lote
+      subItems: [
+        { icon: '📍', label: 'Lotes', href: '/dashboard/lotes' },
+        { icon: '⚖️', label: 'Pesagens', href: '/dashboard/pesagens' },
+        { icon: '💉', label: 'Manejos', href: '/dashboard/manejo' },
+      ],
+    },
+    { icon: '🌱', label: 'Suporte', href: '/dashboard/suporte-forrageiro' },
+    {
+      icon: '💰',
+      label: 'Financeiro',
+      href: '/dashboard/financeiro', // Parent link for Financeiro
+      subItems: [
+        { icon: '🎯', label: 'Vendas', href: '/dashboard/vendas' },
+        { icon: '📋', label: 'Contas', href: '/dashboard/contas' },
+      ],
+    },
+    { icon: '✅', label: 'Tarefas', href: '/dashboard/tarefas' },
+    { icon: '📅', label: 'Calendário', href: '/dashboard/calendario' },
+    { icon: '📄', label: 'Relatórios', href: '/dashboard/relatorios' },
+  ]
+
 
 export default function DashboardLayoutClient({
   children,
@@ -27,6 +99,99 @@ export default function DashboardLayoutClient({
   const [theme, setTheme] = useState<ThemeMode>('light')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const [showWelcomePage, setShowWelcomePage] = useState(false);
+  const [showQuickTour, setShowQuickTour] = useState(false);
+
+
+  useEffect(() => {
+    const checkOnboarding = async (retries = 3) => {
+      try {
+        let perfil = await getPerfilFazenda();
+
+        // Se o perfil não existe, tenta criar
+        if (!perfil) {
+          if (retries > 0) {
+            console.log(`Profile not found, retrying... (${retries} retries left)`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return checkOnboarding(retries - 1);
+          }
+
+          // Após retries, cria o perfil manualmente
+          console.log("Creating profile manually...");
+          try {
+            perfil = await criarPerfilFazenda({
+              cidade: 'A definir',
+              estado: 'SP'
+            });
+          } catch (createError) {
+            console.error("Failed to create profile:", createError);
+            // Mesmo sem perfil, mostra a welcome page
+            setShowWelcomePage(true);
+            return;
+          }
+        }
+
+        // Verifica status do onboarding
+        if (perfil.onboarding_completed !== true) {
+          setShowWelcomePage(true);
+        } else if (perfil.quick_tour_completed === false && perfil.quick_tour_skipped === false) {
+          // Tour não completado nem pulado - pode iniciar automaticamente se desejar
+          // setShowQuickTour(true);
+        }
+      } catch (error) {
+        console.error("Failed to check onboarding status:", error);
+        // Em caso de erro, mostra a welcome page para não bloquear o usuário
+        setShowWelcomePage(true);
+      }
+    };
+
+    checkOnboarding();
+  }, []);
+
+  const handleStartTour = () => {
+    console.log("handleStartTour called");
+
+    // Fecha o WelcomePage primeiro
+    setShowWelcomePage(false);
+
+    // Abre o QuickTour após um delay
+    setTimeout(() => {
+      console.log("Opening QuickTour");
+      setShowQuickTour(true);
+    }, 500);
+
+    // Marca o onboarding como concluído em background (não bloqueia)
+    marcarOnboardingConcluido().catch(error => {
+      console.error("Failed to mark onboarding as completed:", error);
+    });
+  };
+
+  const handleSkipWelcome = async () => {
+    setShowWelcomePage(false);
+     try {
+        await marcarOnboardingConcluido(); // Still mark welcome as done
+    } catch (error) {
+        console.error("Failed to mark onboarding as completed:", error);
+    }
+  }
+
+  const handleFinishTour = async () => {
+    setShowQuickTour(false);
+    try {
+        await marcarQuickTourConcluido();
+    } catch (error) {
+        console.error("Failed to mark tour as completed:", error);
+    }
+  };
+
+  const handleSkipTour = async () => {
+    setShowQuickTour(false);
+    try {
+      await marcarQuickTourPulado();
+    } catch (error) {
+      console.error("Failed to mark tour as skipped:", error);
+    }
+  };
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as ThemeMode || 'light'
@@ -73,42 +238,7 @@ export default function DashboardLayoutClient({
     await supabase.auth.signOut()
     router.push('/auth/login')
   }
-
-type MenuItem = {
-  icon: string;
-  label: string;
-  href: string;
-  subItems?: MenuItem[]; // Optional sub-items
-};
-
-  const menuItems: MenuItem[] = [
-    { icon: '📊', label: 'Dashboard', href: '/dashboard' },
-    { icon: '🐮', label: 'Animais', href: '/dashboard/animais' },
-    {
-      icon: '📍',
-      label: 'Lote',
-      href: '/dashboard/lotes', // Parent link for Lote
-      subItems: [
-        { icon: '📍', label: 'Lotes', href: '/dashboard/lotes' },
-        { icon: '⚖️', label: 'Pesagens', href: '/dashboard/pesagens' },
-        { icon: '💉', label: 'Manejos', href: '/dashboard/manejo' },
-      ],
-    },
-    { icon: '🌱', label: 'Suporte', href: '/dashboard/suporte-forrageiro' },
-    {
-      icon: '💰',
-      label: 'Financeiro',
-      href: '/dashboard/financeiro', // Parent link for Financeiro
-      subItems: [
-        { icon: '🎯', label: 'Vendas', href: '/dashboard/vendas' },
-        { icon: '📋', label: 'Contas', href: '/dashboard/contas' },
-      ],
-    },
-    { icon: '✅', label: 'Tarefas', href: '/dashboard/tarefas' },
-    { icon: '📅', label: 'Calendário', href: '/dashboard/calendario' },
-    { icon: '📄', label: 'Relatórios', href: '/dashboard/relatorios' },
-  ]
-
+  
   const getPageTitle = () => {
     if (pathname === '/dashboard') return 'DASHBOARD'
     // Animais
@@ -153,12 +283,26 @@ type MenuItem = {
 
   return (
     <div className="min-h-screen bg-background">
+      {showWelcomePage && (
+        <WelcomePage
+          onStartTour={handleStartTour}
+          onSkip={handleSkipWelcome}
+        />
+      )}
+       {showQuickTour && (
+        <QuickTour
+          isOpen={showQuickTour}
+          steps={tourSteps}
+          onFinish={handleFinishTour}
+          onSkip={handleSkipTour}
+        />
+      )}
       {/* Mobile Top Navigation */}
       <header className="md:hidden fixed top-0 left-0 right-0 bg-card border-b border-border z-50">
         <div className="flex items-center justify-between px-4 py-3">
           <Link href="/dashboard" className="flex items-center">
             <Image
-              src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20(2).png"
+              src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo%20(1).svg"
               alt="Bovinsights"
               width={120}
               height={30}
@@ -232,7 +376,7 @@ type MenuItem = {
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3">
             <Image
-              src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20(2).png"
+              src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo%20(1).svg"
               alt="Bovinsights"
               width={200}
               height={50}
@@ -249,6 +393,7 @@ type MenuItem = {
                 // Parent item with sub-items
                 <>
                   <button
+                    id={item.label.toLowerCase() === 'lote' ? 'menu-lotes' : undefined}
                     onClick={() => setOpenSubmenu(openSubmenu === item.label ? null : item.label)}
                     className={`w-full flex items-center justify-between gap-4 px-4 py-4 rounded-lg transition-all text-lg ${
                       isActive(item.href) || (item.subItems && item.subItems.some(subItem => isActive(subItem.href)))
@@ -308,6 +453,7 @@ type MenuItem = {
 
         <div className="absolute bottom-6 left-0 right-0 px-4 space-y-2">
           <Link
+            id="menu-ajuda"
             href="/dashboard/configuracoes"
             className={`w-full flex items-center gap-4 px-4 py-4 rounded-lg transition-all text-lg ${
               isActive('/dashboard/configuracoes')
@@ -340,7 +486,7 @@ type MenuItem = {
           <div className="flex items-center justify-between px-8 py-4">
             <div className="flex items-center gap-6">
               <Image
-                src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20(2).png"
+                src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo%20(1).svg"
                 alt="Bovinsights"
                 width={140}
                 height={35}
@@ -382,7 +528,7 @@ type MenuItem = {
         </div>
 
         {/* Page Content */}
-        <div className="p-4 md:p-8">
+        <div id="dashboard" className="p-4 md:p-8">
           {children}
         </div>
       </main>

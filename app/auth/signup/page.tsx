@@ -58,24 +58,7 @@ export default function SignUpPage() {
 
       if (error) throw error
 
-      // Criar perfil do usuário
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('perfil_usuario')
-          .insert({
-            usuario_id: data.user.id,
-            nome_fazenda: formData.farmName,
-            email_contato: formData.email,
-            cidade: 'A definir',
-            estado: 'SP',
-          })
-
-        if (profileError) {
-          console.error('Erro ao criar perfil:', profileError)
-        }
-      }
-
-      toast.success('Cadastro realizado com sucesso!')
+      toast.success('Cadastro realizado com sucesso! Redirecionando...')
       router.push('/dashboard')
     } catch (error: any) {
       console.error('Erro no cadastro:', error)

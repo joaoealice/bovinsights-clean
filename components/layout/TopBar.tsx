@@ -37,7 +37,7 @@ export default function TopBar() {
         {/* Logo */}
         <Link href="/dashboard" className="flex items-center gap-3">
           <Image
-            src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20(2).png"
+            src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo%20(1).svg"
             alt="Bovinsights"
             width={140}
             height={36}

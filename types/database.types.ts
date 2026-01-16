@@ -30,6 +30,9 @@ export interface Database {
           latitude: number | null
           longitude: number | null
           coordenadas_atualizadas_em: string | null
+          onboarding_completed: boolean | null
+          quick_tour_completed: boolean | null
+          quick_tour_skipped: boolean | null
           created_at: string
           updated_at: string
         }
@@ -53,6 +56,9 @@ export interface Database {
           latitude?: number | null
           longitude?: number | null
           coordenadas_atualizadas_em?: string | null
+          onboarding_completed?: boolean | null
+          quick_tour_completed?: boolean | null
+          quick_tour_skipped?: boolean | null
           created_at?: string
           updated_at?: string
         }
@@ -76,6 +82,9 @@ export interface Database {
           latitude?: number | null
           longitude?: number | null
           coordenadas_atualizadas_em?: string | null
+          onboarding_completed?: boolean | null
+          quick_tour_completed?: boolean | null
+          quick_tour_skipped?: boolean | null
           created_at?: string
           updated_at?: string
         }
