@@ -27,17 +27,17 @@ export default function LoteCard({ lote }: LoteCardProps) {
 
   const getTipoLabel = (tipo: string | undefined) => {
     if (!tipo) return null
-    const tipos: Record<string, string> = {
-      confinamento: 'Confinamento',
-      semiconfinamento: 'Semi Confinamento',
-      pasto: 'Pasto',
-      cria: 'Cria',
-      recria: 'Recria',
-      engorda: 'Engorda',
-      reproducao: 'Reproducao',
-      quarentena: 'Quarentena',
+    const tipos: Record<string, { label: string; icon: string; bg: string }> = {
+      confinamento: { label: 'Confinamento', icon: '🏠', bg: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+      semiconfinamento: { label: 'Semi Confinamento', icon: '🌾', bg: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+      pasto: { label: 'Pasto', icon: '🌿', bg: 'bg-green-500/20 text-green-400 border-green-500/30' },
+      cria: { label: 'Cria', icon: '🐄', bg: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+      recria: { label: 'Recria', icon: '🐂', bg: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+      engorda: { label: 'Engorda', icon: '🥩', bg: 'bg-red-500/20 text-red-400 border-red-500/30' },
+      reproducao: { label: 'Reproducao', icon: '💕', bg: 'bg-pink-500/20 text-pink-400 border-pink-500/30' },
+      quarentena: { label: 'Quarentena', icon: '🏥', bg: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
     }
-    return tipos[tipo] || tipo
+    return tipos[tipo] || { label: tipo, icon: '📍', bg: 'bg-muted/30 text-muted-foreground border-muted/30' }
   }
 
   // Calcular dias no lote
@@ -51,16 +51,13 @@ export default function LoteCard({ lote }: LoteCardProps) {
 
   const diasNoLote = calcularDiasNoLote()
 
-  // Determinar cor e fase do ciclo
-  const getDiasCicloInfo = (dias: number) => {
-    if (dias <= 45) return { cor: 'text-success', bg: 'bg-success/10 border-success/30', fase: 'Inicio' }
-    if (dias <= 60) return { cor: 'text-primary', bg: 'bg-primary/10 border-primary/30', fase: '45-60d' }
-    if (dias <= 90) return { cor: 'text-accent', bg: 'bg-accent/10 border-accent/30', fase: '60-90d' }
-    if (dias <= 120) return { cor: 'text-warning', bg: 'bg-warning/10 border-warning/30', fase: '90-120d' }
-    return { cor: 'text-error', bg: 'bg-error/10 border-error/30', fase: '+120d' }
+  // Formatar data da última pesagem
+  const formatarDataPesagem = (data: string | null) => {
+    if (!data) return null
+    return new Date(data).toLocaleDateString('pt-BR')
   }
 
-  const diasInfo = getDiasCicloInfo(diasNoLote)
+  const tipoInfo = getTipoLabel(lote.tipo_lote)
 
   return (
     <Link href={`/dashboard/lotes/${lote.id}`}>
@@ -90,52 +87,52 @@ export default function LoteCard({ lote }: LoteCardProps) {
           </span>
         </div>
 
-        {/* Tipo de Lote e Dias */}
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
-          {lote.tipo_lote && (
-            <span className="text-xs bg-muted/30 px-2 py-1 rounded">
-              {getTipoLabel(lote.tipo_lote)}
-            </span>
-          )}
-          <span className={`text-xs px-2 py-1 rounded border ${diasInfo.bg}`}>
-            <span className={`font-mono font-bold ${diasInfo.cor}`}>{diasNoLote}</span>
-            <span className="text-muted-foreground ml-1">dias</span>
-          </span>
-        </div>
+        {/* Tipo de Lote - Destaque */}
+        {tipoInfo && (
+          <div className={`flex items-center gap-2 mb-4 px-3 py-2 rounded-lg border ${tipoInfo.bg}`}>
+            <span className="text-xl">{tipoInfo.icon}</span>
+            <span className="font-display text-lg tracking-wide">{tipoInfo.label}</span>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3 mb-4">
-          <div>
-            <p className="text-xs text-muted-foreground">Animais</p>
-            <p className="font-mono font-bold text-lg">{lote.total_animais}</p>
+          <div className="text-center bg-muted/20 rounded-lg p-2">
+            <p className="text-xs text-muted-foreground mb-1">Animais</p>
+            <p className="font-display text-xl">{lote.total_animais}</p>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Peso Med.</p>
-            <p className="font-mono font-bold text-lg">
-              {lote.peso_medio > 0 ? `${lote.peso_medio}` : '-'}
+          <div className="text-center bg-muted/20 rounded-lg p-2">
+            <p className="text-xs text-muted-foreground mb-1">Peso Med.</p>
+            <p className="font-display text-xl">
+              {lote.peso_medio > 0 ? lote.peso_medio : '-'}
               {lote.peso_medio > 0 && <span className="text-xs text-muted-foreground"> kg</span>}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Ciclo</p>
-            <p className={`font-mono font-bold text-lg ${diasInfo.cor}`}>
-              {diasInfo.fase}
+          <div className="text-center bg-primary/15 rounded-lg p-2">
+            <p className="text-xs text-muted-foreground mb-1">Total @</p>
+            <p className="font-display text-xl text-primary">
+              {lote.total_arrobas > 0 ? lote.total_arrobas : '-'}
             </p>
           </div>
         </div>
 
-        {/* Barra de Progresso do Ciclo */}
-        <div className="mb-4">
-          <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
-            <div
-              className={`h-full transition-all ${
-                diasNoLote <= 45 ? 'bg-success' :
-                diasNoLote <= 60 ? 'bg-primary' :
-                diasNoLote <= 90 ? 'bg-accent' :
-                diasNoLote <= 120 ? 'bg-warning' : 'bg-error'
-              }`}
-              style={{ width: `${Math.min((diasNoLote / 120) * 100, 100)}%` }}
-            />
+        {/* Última Pesagem e Dias no Lote */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-muted/10 rounded-lg p-3 border border-border/50">
+            <p className="text-xs text-muted-foreground mb-1">Última Pesagem</p>
+            {lote.data_ultima_pesagem ? (
+              <p className="font-mono font-bold text-sm text-success">
+                {formatarDataPesagem(lote.data_ultima_pesagem)}
+              </p>
+            ) : (
+              <p className="font-mono text-xs text-warning">Sem pesagem</p>
+            )}
+          </div>
+          <div className="bg-muted/10 rounded-lg p-3 border border-border/50">
+            <p className="text-xs text-muted-foreground mb-1">Dias no Lote</p>
+            <p className="font-mono font-bold text-sm">
+              {diasNoLote} <span className="text-muted-foreground font-normal">dias</span>
+            </p>
           </div>
         </div>
 

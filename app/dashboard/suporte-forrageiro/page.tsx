@@ -408,11 +408,16 @@ export default function SuporteForrageiro() {
           </div>
 
           {/* Métricas de Área */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
             <div className="bg-primary/10 rounded-lg p-4 text-center">
               <p className="text-xs text-muted-foreground uppercase mb-1">Área</p>
               <p className="font-display text-2xl text-primary">{geometry.areaHectares.toFixed(2)}</p>
               <p className="text-sm text-muted-foreground">hectares</p>
+            </div>
+            <div className="bg-accent/10 rounded-lg p-4 text-center">
+              <p className="text-xs text-muted-foreground uppercase mb-1">Área</p>
+              <p className="font-display text-2xl text-accent">{(geometry.areaHectares * 2.4).toFixed(2)}</p>
+              <p className="text-sm text-muted-foreground">tarefas</p>
             </div>
             <div className="bg-muted/30 rounded-lg p-4 text-center">
               <p className="text-xs text-muted-foreground uppercase mb-1">Perímetro</p>
@@ -550,24 +555,25 @@ export default function SuporteForrageiro() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {areasSalvas.map((area) => (
               <div
                 key={area.id}
-                className="bg-muted/10 rounded-lg border border-border p-4 hover:border-primary/50 transition-all"
+                className="bg-gradient-to-br from-muted/20 to-muted/5 rounded-xl border-2 border-border p-5 hover:border-primary/50 hover:shadow-lg transition-all duration-300"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h4 className="font-semibold text-lg">{area.nome}</h4>
+                {/* Header do Card */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h4 className="font-display text-2xl text-foreground mb-1 tracking-wide">{area.nome}</h4>
                     {area.tipo_pasto && TIPOS_PASTO[area.tipo_pasto as TipoPasto] && (
-                      <p className="text-xs text-primary">
+                      <p className="text-sm text-primary font-medium">
                         {TIPOS_PASTO[area.tipo_pasto as TipoPasto].nome}
                       </p>
                     )}
                     {area.lote && (
                       <Link
                         href={`/dashboard/lotes/${area.lote.id}`}
-                        className="text-xs text-accent hover:underline flex items-center gap-1"
+                        className="text-sm text-accent hover:underline flex items-center gap-1 mt-1 font-medium"
                       >
                         <span>📍</span>
                         {area.lote.nome}
@@ -576,45 +582,59 @@ export default function SuporteForrageiro() {
                   </div>
                   <button
                     onClick={() => handleDeleteArea(area.id)}
-                    className="text-error/70 hover:text-error text-sm px-2 py-1 rounded hover:bg-error/10 transition-all"
+                    className="text-error/50 hover:text-error text-lg p-2 rounded-lg hover:bg-error/10 transition-all"
                     title="Excluir piquete"
                   >
                     🗑️
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                  <div className="bg-primary/10 rounded p-2 text-center">
-                    <p className="text-xs text-muted-foreground">Área</p>
-                    <p className="font-mono font-bold text-primary">{area.area_hectares.toFixed(2)} ha</p>
+                {/* Métricas de Área */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-primary/15 rounded-lg p-3 text-center">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Área</p>
+                    <p className="font-display text-2xl text-primary">{area.area_hectares.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">hectares</p>
                   </div>
-                  <div className="bg-muted/30 rounded p-2 text-center">
-                    <p className="text-xs text-muted-foreground">Capacidade</p>
-                    <p className="font-mono font-bold">
-                      {area.capacidade_ua ? `${area.capacidade_ua} UA` : '-'}
-                    </p>
+                  <div className="bg-accent/15 rounded-lg p-3 text-center">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Área</p>
+                    <p className="font-display text-2xl text-accent">{(area.area_hectares * 2.4).toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">tarefas</p>
                   </div>
                 </div>
 
+                {/* Capacidade */}
+                <div className="bg-success/10 rounded-lg p-3 text-center mb-4">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Capacidade de Suporte</p>
+                  <p className="font-display text-3xl text-success">
+                    {area.capacidade_ua ? area.capacidade_ua : '-'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">UA por dia</p>
+                </div>
+
+                {/* Detalhes do Pasto */}
                 {area.tipo_pasto && (
-                  <div className="grid grid-cols-3 gap-1 text-xs">
-                    <div className="bg-muted/20 rounded p-1 text-center">
-                      <p className="text-muted-foreground">Entrada</p>
-                      <p className="font-mono">{area.altura_entrada_cm || '-'} cm</p>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="bg-muted/30 rounded-lg p-2 text-center">
+                      <p className="text-muted-foreground mb-1">Entrada</p>
+                      <p className="font-display text-lg">{area.altura_entrada_cm || '-'}</p>
+                      <p className="text-muted-foreground">cm</p>
                     </div>
-                    <div className="bg-muted/20 rounded p-1 text-center">
-                      <p className="text-muted-foreground">Saída</p>
-                      <p className="font-mono">{area.altura_saida_cm || '-'} cm</p>
+                    <div className="bg-muted/30 rounded-lg p-2 text-center">
+                      <p className="text-muted-foreground mb-1">Saída</p>
+                      <p className="font-display text-lg">{area.altura_saida_cm || '-'}</p>
+                      <p className="text-muted-foreground">cm</p>
                     </div>
-                    <div className="bg-muted/20 rounded p-1 text-center">
-                      <p className="text-muted-foreground">MS</p>
-                      <p className="font-mono">{area.ms_total_kg ? `${(area.ms_total_kg / 1000).toFixed(1)}t` : '-'}</p>
+                    <div className="bg-muted/30 rounded-lg p-2 text-center">
+                      <p className="text-muted-foreground mb-1">MS Total</p>
+                      <p className="font-display text-lg">{area.ms_total_kg ? (area.ms_total_kg / 1000).toFixed(1) : '-'}</p>
+                      <p className="text-muted-foreground">ton</p>
                     </div>
                   </div>
                 )}
 
-                <p className="text-[10px] text-muted-foreground mt-2">
-                  Criado em {new Date(area.created_at).toLocaleDateString('pt-BR')}
+                <p className="text-xs text-muted-foreground mt-4 text-center border-t border-border/50 pt-3">
+                  Cadastrado em {new Date(area.created_at).toLocaleDateString('pt-BR')}
                 </p>
               </div>
             ))}
