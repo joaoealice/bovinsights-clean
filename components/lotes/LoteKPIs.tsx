@@ -2,6 +2,7 @@ interface KPI {
   label: string
   value: string | number
   icon: string
+  subValue?: string
   trend?: {
     value: string
     positive: boolean
@@ -35,6 +36,9 @@ export default function LoteKPIs({ kpis }: LoteKPIsProps) {
           </div>
           <p className="text-sm text-muted-foreground mb-1">{kpi.label}</p>
           <p className="font-display text-3xl">{kpi.value}</p>
+          {kpi.subValue && (
+            <p className="text-sm text-muted-foreground mt-1">{kpi.subValue}</p>
+          )}
         </div>
       ))}
     </div>

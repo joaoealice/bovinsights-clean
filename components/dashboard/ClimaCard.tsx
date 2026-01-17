@@ -112,20 +112,20 @@ export default function ClimaCard() {
   return (
     <div className="card-leather p-6 bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-2 border-blue-500/30">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-display text-lg flex items-center gap-2">
-          <span className="text-2xl">{iconeClima(dados.codigo_clima)}</span>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-display text-xl flex items-center gap-2">
+          <span className="text-3xl">{iconeClima(dados.codigo_clima)}</span>
           CLIMA
         </h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             onClick={handleAtualizar}
             disabled={atualizando}
-            className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            className="p-2 hover:bg-muted/30 rounded-lg text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
             title="Atualizar dados"
           >
             <svg
-              className={`w-4 h-4 ${atualizando ? 'animate-spin' : ''}`}
+              className={`w-5 h-5 ${atualizando ? 'animate-spin' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -138,22 +138,24 @@ export default function ClimaCard() {
               />
             </svg>
           </button>
-          <span className="text-xs text-muted-foreground">
-            {dados.cidade}, {dados.estado}
-          </span>
+          <div className="bg-blue-500/20 px-3 py-1 rounded-full">
+            <span className="text-sm font-semibold text-blue-400">
+              {dados.cidade}, {dados.estado}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Temperatura Principal */}
       <div className="text-center mb-4">
-        <p className="font-display text-5xl md:text-6xl text-blue-500 font-bold">
+        <p className="font-display text-6xl md:text-7xl text-blue-500 font-bold tracking-tight">
           {formatarTemperatura(dados.temperatura_atual)}
         </p>
-        <p className="text-sm text-muted-foreground capitalize">
+        <p className="text-base text-muted-foreground capitalize font-semibold mt-1">
           {dados.descricao_clima}
         </p>
         {dados.sensacao_termica !== null && dados.sensacao_termica !== dados.temperatura_atual && (
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Sensacao: {formatarTemperatura(dados.sensacao_termica)}
           </p>
         )}

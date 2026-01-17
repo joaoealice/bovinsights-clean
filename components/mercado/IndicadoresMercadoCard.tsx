@@ -18,6 +18,7 @@ export default function IndicadoresMercadoCard() {
   const [otherIndicators, setOtherIndicators] = useState<MarketIndicator[]>([])
   const [history, setHistory] = useState<MarketIndicator[]>([])
   const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -180,17 +181,42 @@ export default function IndicadoresMercadoCard() {
     )
   }
 
+  // Formatar data para o gráfico
+  const formatDateShort = (dateString: string) => {
+    if (!dateString) return ''
+    const date = new Date(dateString + 'T00:00:00')
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  }
+
+  // Calcular variação percentual
+  const calcVariacao = () => {
+    if (history.length < 2) return 0
+    const primeiro = history[history.length - 1]?.price_today || 0
+    const ultimo = history[0]?.price_today || 0
+    if (primeiro === 0) return 0
+    return ((ultimo - primeiro) / primeiro) * 100
+  }
+
   return (
     <div className="card-leather p-6 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-display text-xl flex items-center gap-2">
           <span className="text-2xl">📊</span>
-          INDICADORES DE MERCADO
+          INDICADORES
         </h3>
-        <span className="text-xs text-muted-foreground">
-          {formatDate(bahiaSulIndicator?.reference_date || bahiaOesteIndicator?.reference_date || indicators[0]?.reference_date || '')}
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-1 px-3 py-1.5 bg-primary/20 hover:bg-primary/30 text-primary rounded-full text-xs font-semibold transition-colors"
+          >
+            <span>📈</span>
+            <span>7 dias</span>
+          </button>
+          <span className="text-xs text-muted-foreground">
+            {formatDate(bahiaSulIndicator?.reference_date || bahiaOesteIndicator?.reference_date || indicators[0]?.reference_date || '')}
+          </span>
+        </div>
       </div>
 
       {/* Bahia Sul e Bahia Oeste em destaque - FIXOS */}
@@ -307,6 +333,146 @@ export default function IndicadoresMercadoCard() {
           will-change: transform;
         }
       `}</style>
+
+      {/* Modal de Histórico 7 dias */}
+      {showModal && (
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black/60 z-50 animate-fade-in"
+            onClick={() => setShowModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[600px] bg-card border border-border rounded-2xl z-50 shadow-2xl animate-slide-in max-h-[80vh] overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <div>
+                <h3 className="font-display text-2xl">HISTORICO 7 DIAS</h3>
+                <p className="text-sm text-muted-foreground">Movimentacao da arroba - BA Sul</p>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <span className="text-xl">✕</span>
+              </button>
+            </div>
+
+            {/* Conteúdo */}
+            <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
+              {/* Resumo */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-muted/30 rounded-xl p-3 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Inicio (7d)</p>
+                  <p className="font-display text-xl">
+                    {formatPrice(history[history.length - 1]?.price_today || 0)}
+                  </p>
+                </div>
+                <div className="bg-muted/30 rounded-xl p-3 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Hoje</p>
+                  <p className="font-display text-xl text-primary">
+                    {formatPrice(history[0]?.price_today || 0)}
+                  </p>
+                </div>
+                <div className={`rounded-xl p-3 text-center ${calcVariacao() >= 0 ? 'bg-success/20' : 'bg-error/20'}`}>
+                  <p className="text-xs text-muted-foreground mb-1">Variacao</p>
+                  <p className={`font-display text-xl ${calcVariacao() >= 0 ? 'text-success' : 'text-error'}`}>
+                    {calcVariacao() >= 0 ? '+' : ''}{calcVariacao().toFixed(2)}%
+                  </p>
+                </div>
+              </div>
+
+              {/* Gráfico de Linhas SVG */}
+              {chartData.length > 1 && (
+                <div className="bg-muted/20 rounded-xl p-4">
+                  <svg viewBox="0 0 300 120" className="w-full h-32">
+                    {/* Grid lines */}
+                    <line x1="30" y1="10" x2="30" y2="100" stroke="currentColor" strokeOpacity="0.1" />
+                    <line x1="30" y1="100" x2="290" y2="100" stroke="currentColor" strokeOpacity="0.1" />
+                    <line x1="30" y1="55" x2="290" y2="55" stroke="currentColor" strokeOpacity="0.1" strokeDasharray="4" />
+
+                    {/* Linha do gráfico */}
+                    <polyline
+                      fill="none"
+                      stroke="rgb(142, 106, 54)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      points={chartData.map((point, index) => {
+                        const x = 30 + (index * (260 / (chartData.length - 1 || 1)))
+                        const y = 100 - (point.normalized * 0.9)
+                        return `${x},${y}`
+                      }).join(' ')}
+                    />
+
+                    {/* Pontos */}
+                    {chartData.map((point, index) => {
+                      const x = 30 + (index * (260 / (chartData.length - 1 || 1)))
+                      const y = 100 - (point.normalized * 0.9)
+                      return (
+                        <circle
+                          key={index}
+                          cx={x}
+                          cy={y}
+                          r={index === chartData.length - 1 ? 6 : 4}
+                          fill={index === chartData.length - 1 ? 'rgb(142, 106, 54)' : 'rgb(100, 95, 88)'}
+                          stroke="rgb(28, 24, 20)"
+                          strokeWidth="2"
+                        />
+                      )
+                    })}
+
+                    {/* Labels de data */}
+                    {chartData.map((point, index) => {
+                      const x = 30 + (index * (260 / (chartData.length - 1 || 1)))
+                      return (
+                        <text
+                          key={`label-${index}`}
+                          x={x}
+                          y="115"
+                          textAnchor="middle"
+                          className="fill-muted-foreground text-[8px]"
+                        >
+                          {formatDateShort(point.reference_date)}
+                        </text>
+                      )
+                    })}
+                  </svg>
+                </div>
+              )}
+
+              {/* Lista detalhada */}
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-muted-foreground">Detalhamento diario</p>
+                {[...history].reverse().map((item, index) => {
+                  const isLast = index === history.length - 1
+                  const trendColor = getTrendColor(item.trend)
+                  return (
+                    <div
+                      key={index}
+                      className={`flex items-center justify-between p-3 rounded-lg ${isLast ? 'bg-primary/20 border border-primary/30' : 'bg-muted/20'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-muted-foreground w-12">
+                          {formatDateShort(item.reference_date)}
+                        </span>
+                        <span className={`font-display text-lg ${isLast ? 'text-primary' : ''}`}>
+                          {formatPrice(item.price_today)}
+                        </span>
+                      </div>
+                      <div className={`flex items-center gap-1 ${trendColor}`}>
+                        <span>{getTrendIcon(item.trend)}</span>
+                        <span className="font-mono text-sm">{formatDiff(item.diff)}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

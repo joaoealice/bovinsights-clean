@@ -215,29 +215,26 @@ export default function SuporteForrageiro() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-4xl md:text-5xl mb-2">Cadastro de Piquetes</h1>
-        <p className="text-muted-foreground text-lg">
-          Suporte Forrageiro
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-3xl md:text-4xl tracking-wide">SUPORTE FORRAGEIRO</h1>
+          <p className="text-muted-foreground text-base mt-1">
+            Cadastro e gestao de piquetes
+          </p>
+        </div>
+        <span className="text-4xl">🌾</span>
       </div>
 
       {/* Mensagem-guia da sessão */}
-      <div className="card-leather p-6 bg-primary/5 border-primary/30">
-        <div className="flex items-start gap-4">
-          <span className="text-3xl">🌾</span>
-          <div>
-            <h3 className="font-display text-xl mb-1 text-primary">Como funciona</h3>
-            <p className="text-foreground">
-              Cadastre seus piquetes uma única vez. O sistema usará essas informações para calcular automaticamente o tempo ideal de permanência dos lotes no futuro.
-            </p>
-          </div>
-        </div>
+      <div className="bg-primary/10 border border-primary/30 rounded-xl p-4">
+        <p className="text-sm text-foreground">
+          <strong className="text-primary">Como funciona:</strong> Cadastre seus piquetes uma unica vez. O sistema usara essas informacoes para calcular automaticamente o tempo ideal de permanencia dos lotes.
+        </p>
       </div>
 
       {/* Formulário de Identificação */}
       <div className="card-leather p-6">
-        <h3 className="font-display text-xl mb-4">Identificacao do Piquete</h3>
+        <h3 className="font-display text-lg mb-4 text-muted-foreground">IDENTIFICACAO</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Nome do Piquete */}
@@ -387,7 +384,7 @@ export default function SuporteForrageiro() {
 
       {/* Mapa */}
       <div className="card-leather p-6">
-        <h3 className="font-display text-2xl mb-4">Desenhar Área do Piquete</h3>
+        <h3 className="font-display text-lg mb-4 text-muted-foreground">DESENHAR AREA</h3>
         <PastoMap
           key={mapKey}
           onPolygonDrawn={handlePolygonDrawn}
@@ -532,109 +529,94 @@ export default function SuporteForrageiro() {
       {/* Áreas Salvas */}
       <div className="card-leather p-6">
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="font-display text-2xl">PIQUETES CADASTRADOS</h3>
-            <p className="text-muted-foreground text-sm">
-              Seus piquetes com potencial forrageiro calculado
-            </p>
-          </div>
-          <span className="text-2xl">🗺️</span>
+          <h3 className="font-display text-lg text-muted-foreground">PIQUETES CADASTRADOS</h3>
+          <span className="text-xl bg-muted/30 p-2 rounded-lg">🗺️</span>
         </div>
 
         {loadingData ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
-            <p className="text-muted-foreground">Carregando piquetes...</p>
+            <p className="text-muted-foreground text-sm">Carregando...</p>
           </div>
         ) : areasSalvas.length === 0 ? (
-          <div className="text-center py-8 bg-muted/10 rounded-lg border border-border">
-            <p className="text-4xl mb-3">🌾</p>
-            <p className="text-muted-foreground mb-2">Nenhum piquete cadastrado ainda</p>
-            <p className="text-sm text-muted-foreground">
-              Desenhe uma área no mapa acima e clique em "Salvar"
-            </p>
+          <div className="text-center py-8 bg-muted/10 rounded-lg border border-dashed border-border">
+            <p className="text-3xl mb-2">🌾</p>
+            <p className="text-muted-foreground text-sm">Nenhum piquete cadastrado</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {areasSalvas.map((area) => (
               <div
                 key={area.id}
-                className="bg-gradient-to-br from-muted/20 to-muted/5 rounded-xl border-2 border-border p-5 hover:border-primary/50 hover:shadow-lg transition-all duration-300"
+                className="bg-gradient-to-br from-muted/20 to-muted/5 rounded-xl border border-border p-4 hover:border-primary/50 transition-all"
               >
                 {/* Header do Card */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h4 className="font-display text-2xl text-foreground mb-1 tracking-wide">{area.nome}</h4>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-display text-xl text-foreground truncate">{area.nome}</h4>
                     {area.tipo_pasto && TIPOS_PASTO[area.tipo_pasto as TipoPasto] && (
-                      <p className="text-sm text-primary font-medium">
+                      <p className="text-xs text-primary font-semibold mt-0.5">
                         {TIPOS_PASTO[area.tipo_pasto as TipoPasto].nome}
                       </p>
                     )}
                     {area.lote && (
                       <Link
                         href={`/dashboard/lotes/${area.lote.id}`}
-                        className="text-sm text-accent hover:underline flex items-center gap-1 mt-1 font-medium"
+                        className="text-xs text-accent hover:underline inline-flex items-center gap-1 mt-1"
                       >
-                        <span>📍</span>
-                        {area.lote.nome}
+                        📍 {area.lote.nome}
                       </Link>
                     )}
                   </div>
                   <button
                     onClick={() => handleDeleteArea(area.id)}
-                    className="text-error/50 hover:text-error text-lg p-2 rounded-lg hover:bg-error/10 transition-all"
-                    title="Excluir piquete"
+                    className="text-error/40 hover:text-error p-1.5 rounded-lg hover:bg-error/10 transition-all"
+                    title="Excluir"
                   >
                     🗑️
                   </button>
                 </div>
 
                 {/* Métricas de Área */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-primary/15 rounded-lg p-3 text-center">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Área</p>
-                    <p className="font-display text-2xl text-primary">{area.area_hectares.toFixed(2)}</p>
-                    <p className="text-xs text-muted-foreground">hectares</p>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="bg-primary/10 rounded-lg p-2 text-center">
+                    <p className="font-display text-xl text-primary">{area.area_hectares.toFixed(2)}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">hectares</p>
                   </div>
-                  <div className="bg-accent/15 rounded-lg p-3 text-center">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Área</p>
-                    <p className="font-display text-2xl text-accent">{(area.area_hectares * 2.4).toFixed(2)}</p>
-                    <p className="text-xs text-muted-foreground">tarefas</p>
+                  <div className="bg-accent/10 rounded-lg p-2 text-center">
+                    <p className="font-display text-xl text-accent">{(area.area_hectares * 2.4).toFixed(2)}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">tarefas</p>
                   </div>
                 </div>
 
                 {/* Capacidade */}
-                <div className="bg-success/10 rounded-lg p-3 text-center mb-4">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Capacidade de Suporte</p>
-                  <p className="font-display text-3xl text-success">
+                <div className="bg-success/10 rounded-lg p-3 text-center mb-3">
+                  <p className="font-display text-2xl text-success">
                     {area.capacidade_ua ? area.capacidade_ua : '-'}
                   </p>
-                  <p className="text-xs text-muted-foreground">UA por dia</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">UA/dia</p>
                 </div>
 
                 {/* Detalhes do Pasto */}
                 {area.tipo_pasto && (
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="bg-muted/30 rounded-lg p-2 text-center">
-                      <p className="text-muted-foreground mb-1">Entrada</p>
-                      <p className="font-display text-lg">{area.altura_entrada_cm || '-'}</p>
-                      <p className="text-muted-foreground">cm</p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <div className="bg-muted/20 rounded-lg p-2 text-center">
+                      <p className="font-display text-base">{area.altura_entrada_cm || '-'}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase">Entrada cm</p>
                     </div>
-                    <div className="bg-muted/30 rounded-lg p-2 text-center">
-                      <p className="text-muted-foreground mb-1">Saída</p>
-                      <p className="font-display text-lg">{area.altura_saida_cm || '-'}</p>
-                      <p className="text-muted-foreground">cm</p>
+                    <div className="bg-muted/20 rounded-lg p-2 text-center">
+                      <p className="font-display text-base">{area.altura_saida_cm || '-'}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase">Saida cm</p>
                     </div>
-                    <div className="bg-muted/30 rounded-lg p-2 text-center">
-                      <p className="text-muted-foreground mb-1">MS Total</p>
-                      <p className="font-display text-lg">{area.ms_total_kg ? (area.ms_total_kg / 1000).toFixed(1) : '-'}</p>
-                      <p className="text-muted-foreground">ton</p>
+                    <div className="bg-muted/20 rounded-lg p-2 text-center">
+                      <p className="font-display text-base">{area.ms_total_kg ? (area.ms_total_kg / 1000).toFixed(1) : '-'}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase">MS ton</p>
                     </div>
                   </div>
                 )}
 
-                <p className="text-xs text-muted-foreground mt-4 text-center border-t border-border/50 pt-3">
-                  Cadastrado em {new Date(area.created_at).toLocaleDateString('pt-BR')}
+                <p className="text-[10px] text-muted-foreground mt-3 text-center border-t border-border/30 pt-2">
+                  {new Date(area.created_at).toLocaleDateString('pt-BR')}
                 </p>
               </div>
             ))}

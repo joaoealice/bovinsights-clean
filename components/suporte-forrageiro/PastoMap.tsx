@@ -661,110 +661,99 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon }: PastoMapPro
   return (
     <div className="space-y-4">
       {/* Barra de busca de localização */}
-      <div className="card-leather p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <label className="block text-sm font-semibold text-foreground mb-2">
-              Buscar localização
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && searchLocation()}
-                placeholder="Digite cidade, bairro ou endereço..."
-                className="flex-1 px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-              />
-              <button
-                onClick={searchLocation}
-                disabled={searching || !searchQuery.trim()}
-                className="px-6 py-3 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all flex items-center gap-2"
-              >
-                {searching ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                ) : (
-                  <span>🔍</span>
-                )}
-                Buscar
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-end">
-            <button
-              onClick={() => setShowManualInput(!showManualInput)}
-              className="px-4 py-3 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-lg transition-all flex items-center gap-2"
-            >
-              <span>📍</span>
-              {showManualInput ? 'Ocultar' : 'Ir para coordenada'}
-            </button>
-          </div>
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex-1 min-w-[200px] flex gap-1">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && searchLocation()}
+            placeholder="Buscar local..."
+            className="flex-1 px-3 py-2 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
+          />
+          <button
+            onClick={searchLocation}
+            disabled={searching || !searchQuery.trim()}
+            className="p-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-white rounded-lg transition-all"
+            title="Buscar"
+          >
+            {searching ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            ) : (
+              <span className="text-lg">🔍</span>
+            )}
+          </button>
         </div>
 
+        <button
+          onClick={() => setShowManualInput(!showManualInput)}
+          className={`p-2 rounded-lg transition-all ${showManualInput ? 'bg-accent text-white' : 'bg-muted hover:bg-muted/80 text-foreground'}`}
+          title="Ir para coordenada"
+        >
+          <span className="text-lg">📍</span>
+        </button>
+
         {showManualInput && (
-          <div className="mt-4 pt-4 border-t border-border">
-            <label className="block text-sm font-semibold text-foreground mb-2">
-              Ir para coordenada específica
-            </label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                value={manualLat}
-                onChange={(e) => setManualLat(e.target.value)}
-                placeholder="Latitude (ex: -23.5505)"
-                className="flex-1 px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-              />
-              <input
-                type="text"
-                value={manualLng}
-                onChange={(e) => setManualLng(e.target.value)}
-                placeholder="Longitude (ex: -46.6333)"
-                className="flex-1 px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-              />
-              <button
-                onClick={goToManualCoordinates}
-                className="px-6 py-3 bg-accent hover:bg-accent/90 text-white font-bold rounded-lg transition-all"
-              >
-                Ir
-              </button>
-            </div>
+          <div className="w-full flex flex-wrap gap-2 mt-2 pt-2 border-t border-border">
+            <input
+              type="text"
+              value={manualLat}
+              onChange={(e) => setManualLat(e.target.value)}
+              placeholder="Lat: -23.5505"
+              className="flex-1 min-w-[120px] px-3 py-2 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm font-mono"
+            />
+            <input
+              type="text"
+              value={manualLng}
+              onChange={(e) => setManualLng(e.target.value)}
+              placeholder="Lng: -46.6333"
+              className="flex-1 min-w-[120px] px-3 py-2 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm font-mono"
+            />
+            <button
+              onClick={goToManualCoordinates}
+              className="px-4 py-2 bg-accent hover:bg-accent/90 text-white font-semibold rounded-lg transition-all text-sm"
+            >
+              Ir
+            </button>
           </div>
         )}
 
         {searchError && (
-          <p className="mt-2 text-sm text-error">{searchError}</p>
+          <p className="w-full text-sm text-error">{searchError}</p>
         )}
       </div>
 
       {/* Seletor de modo de entrada */}
       <div className="card-leather p-4">
-        <div className="flex items-center gap-4 mb-4">
-          <span className="text-sm font-semibold text-foreground">Modo de entrada:</span>
-          <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <span className="text-sm font-semibold text-muted-foreground">Modo:</span>
+          <div className="flex gap-1">
             <button
               onClick={() => setInputMode('desenho')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 ${
+              className={`p-2 rounded-lg transition-all ${
                 inputMode === 'desenho'
                   ? 'bg-primary text-white'
                   : 'bg-muted/50 text-foreground hover:bg-muted'
               }`}
+              title="Desenhar no mapa"
             >
-              <span>✏️</span>
-              Desenhar no mapa
+              <span className="text-lg">✏️</span>
             </button>
             <button
               onClick={() => setInputMode('coordenadas')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 ${
+              className={`p-2 rounded-lg transition-all ${
                 inputMode === 'coordenadas'
                   ? 'bg-primary text-white'
                   : 'bg-muted/50 text-foreground hover:bg-muted'
               }`}
+              title="Inserir coordenadas"
             >
-              <span>📝</span>
-              Inserir coordenadas
+              <span className="text-lg">📝</span>
             </button>
           </div>
+          <span className="text-xs text-muted-foreground">
+            {inputMode === 'desenho' ? 'Clique no mapa para marcar pontos' : 'Cole coordenadas'}
+          </span>
         </div>
 
         {/* Modo: Inserir coordenadas */}
@@ -794,18 +783,18 @@ Ou formato JSON: [[-23.5505, -46.6333], [-23.5510, -46.6340], ...]`}
             <div className="flex gap-2">
               <button
                 onClick={processarCoordenadas}
-                className="px-6 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-all flex items-center gap-2"
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-all flex items-center gap-2 text-sm"
               >
                 <span>✅</span>
-                Processar e Visualizar
+                Visualizar
               </button>
               {coordenadasLista.length > 0 && (
                 <button
                   onClick={clearDrawing}
-                  className="px-6 py-3 bg-error hover:bg-error/90 text-white font-bold rounded-lg transition-all flex items-center gap-2"
+                  className="p-2 bg-error hover:bg-error/90 text-white rounded-lg transition-all"
+                  title="Limpar"
                 >
-                  <span>🗑️</span>
-                  Limpar
+                  <span className="text-lg">🗑️</span>
                 </button>
               )}
             </div>
@@ -849,58 +838,49 @@ Ou formato JSON: [[-23.5505, -46.6333], [-23.5510, -46.6340], ...]`}
 
         {/* Modo: Desenho */}
         {inputMode === 'desenho' && (
-          <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
             {!isDrawing && !hasPolygon && (
               <button
                 onClick={startDrawing}
-                className="bg-primary hover:bg-primary/90 text-white font-bold px-6 py-3 rounded-lg shadow-lg transition-all flex items-center gap-2"
+                className="bg-primary hover:bg-primary/90 text-white font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
               >
                 <span>✏️</span>
-                Iniciar Desenho
+                Desenhar
               </button>
             )}
 
             {isDrawing && (
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="bg-primary/10 border border-primary/30 rounded-lg px-4 py-2">
-                  <span className="text-sm font-medium text-primary">
-                    {pointCount} {pointCount === 1 ? 'ponto' : 'pontos'} marcados
-                    {pointCount < 4 && ` (mínimo 4)`}
-                  </span>
-                </div>
+              <>
+                <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-2 rounded-lg">
+                  {pointCount} pts {pointCount < 4 && '(min 4)'}
+                </span>
                 <button
                   onClick={finishPolygon}
                   disabled={pointCount < 4}
-                  className="bg-success hover:bg-success/90 disabled:bg-muted disabled:cursor-not-allowed text-white font-bold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+                  className="p-2 bg-success hover:bg-success/90 disabled:bg-muted disabled:cursor-not-allowed text-white rounded-lg transition-all"
+                  title="Finalizar desenho"
                 >
-                  <span>✓</span>
-                  Finalizar
+                  <span className="text-lg">✓</span>
                 </button>
                 <button
                   onClick={clearDrawing}
-                  className="bg-error hover:bg-error/90 text-white font-bold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+                  className="p-2 bg-error hover:bg-error/90 text-white rounded-lg transition-all"
+                  title="Cancelar"
                 >
-                  <span>✕</span>
-                  Cancelar
+                  <span className="text-lg">✕</span>
                 </button>
-              </div>
+              </>
             )}
 
             {hasPolygon && (
               <button
                 onClick={clearDrawing}
-                className="bg-error hover:bg-error/90 text-white font-bold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+                className="p-2 bg-error/80 hover:bg-error text-white rounded-lg transition-all"
+                title="Limpar e redesenhar"
               >
-                <span>🗑️</span>
-                Limpar e Redesenhar
+                <span className="text-lg">🗑️</span>
               </button>
             )}
-
-            <p className="text-sm text-muted-foreground">
-              {isDrawing
-                ? 'Clique no mapa para marcar os pontos. Duplo clique ou botão "Finalizar" para concluir.'
-                : 'Clique em "Iniciar Desenho" e marque os pontos no mapa. Mínimo 4 pontos.'}
-            </p>
           </div>
         )}
       </div>

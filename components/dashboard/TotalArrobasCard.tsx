@@ -78,23 +78,24 @@ export default function TotalArrobasCard() {
   return (
     <div className="card-leather p-6 bg-gradient-to-br from-success/10 to-success/5 border-2 border-success/30">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-display text-lg flex items-center gap-2">
-          <span className="text-2xl">@</span>
-          ESTOQUE
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-display text-xl flex items-center gap-2">
+          <span className="text-2xl">💰</span>
+          ESTOQUE R$
         </h3>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2 bg-success/20 px-3 py-1.5 rounded-full">
           <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
-          <span className="text-xs text-muted-foreground">{dados?.total_animais || 0} cab</span>
+          <span className="font-display text-lg text-success">{dados?.total_animais || 0}</span>
+          <span className="text-sm text-success/80">cab</span>
         </div>
       </div>
 
       {/* Total de Arrobas em Destaque */}
-      <div className="text-center mb-3">
-        <p className="font-display text-4xl md:text-5xl text-success font-bold">
+      <div className="text-center mb-4">
+        <p className="font-display text-5xl md:text-6xl text-success font-bold tracking-tight">
           {formatNumber(dados?.total_arrobas || 0)}
         </p>
-        <p className="text-sm text-muted-foreground">arrobas em estoque</p>
+        <p className="text-base text-muted-foreground font-semibold">arrobas em estoque</p>
       </div>
 
       {/* Resumo Financeiro */}

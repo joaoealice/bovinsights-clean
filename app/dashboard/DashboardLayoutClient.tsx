@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import NotificacoesDropdown from '@/components/layout/NotificacoesDropdown'
+import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import WelcomePage from '@/components/onboarding/WelcomePage'
 import QuickTour, { TourStep } from '@/components/onboarding/QuickTour'
 import { getPerfilCompleto, getPerfilFazenda, criarPerfilFazenda, marcarOnboardingConcluido, marcarQuickTourConcluido, marcarQuickTourPulado } from '@/lib/services/perfil.service'
@@ -21,32 +22,20 @@ interface DashboardLayoutClientProps {
 const tourSteps: TourStep[] = [
     {
       target: '#dashboard',
-      title: 'Seu painel de controle',
-      text: 'Aqui você acompanha, de forma simples, a situação dos seus lotes, indicadores e alertas do dia a dia.',
+      title: 'Bem-vindo ao Bovinsights!',
+      text: 'Este é seu painel principal. Aqui você acompanha a situação dos seus lotes, indicadores e alertas.',
       placement: 'bottom',
     },
     {
       target: '#menu-lotes',
-      title: 'Gestão dos seus lotes',
-      text: 'É aqui que você cadastra e acompanha cada lote, com quantidade de animais, peso médio e sistema de criação.',
+      title: 'Gestão de Lotes',
+      text: 'Cadastre e acompanhe seus lotes com quantidade de animais, peso médio e sistema de criação.',
       placement: 'right',
     },
     {
-      target: '#indicadores',
-      title: 'Indicadores que ajudam a decidir',
-      text: 'O sistema transforma dados do campo em números fáceis de entender para apoiar suas decisões.',
-      placement: 'bottom',
-    },
-    {
-      target: '#historico',
-      title: 'Histórico sempre organizado',
-      text: 'Pesagens, movimentações e registros ficam salvos para acompanhar a evolução do gado ao longo do tempo.',
-      placement: 'top',
-    },
-    {
       target: '#menu-ajuda',
-      title: 'Sempre que precisar',
-      text: 'Você pode rever esse tour ou acessar ajuda sempre que quiser.',
+      title: 'Configurações e Ajuda',
+      text: 'Acesse suas configurações, perfil da fazenda e ajuda sempre que precisar.',
       placement: 'top',
     },
   ];
@@ -97,10 +86,14 @@ export default function DashboardLayoutClient({
   const [userName, setUserName] = useState(initialUserName)
   const [farmName, setFarmName] = useState(initialFarmName)
   const [theme, setTheme] = useState<ThemeMode>('light')
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [showWelcomePage, setShowWelcomePage] = useState(false);
   const [showQuickTour, setShowQuickTour] = useState(false);
+
+  // Header auto-hide state
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const scrollThreshold = 10; // Minimum scroll distance to trigger hide/show
 
 
   useEffect(() => {
@@ -149,22 +142,27 @@ export default function DashboardLayoutClient({
   }, []);
 
   const handleStartTour = () => {
-    console.log("handleStartTour called");
+    console.log("[Dashboard] handleStartTour called");
 
     // Fecha o WelcomePage primeiro
     setShowWelcomePage(false);
 
     // Abre o QuickTour após um delay
     setTimeout(() => {
-      console.log("Opening QuickTour");
+      console.log("[Dashboard] Setting showQuickTour to TRUE");
       setShowQuickTour(true);
     }, 500);
 
     // Marca o onboarding como concluído em background (não bloqueia)
     marcarOnboardingConcluido().catch(error => {
-      console.error("Failed to mark onboarding as completed:", error);
+      console.error("[Dashboard] Failed to mark onboarding as completed:", error);
     });
   };
+
+  // Debug: log state changes
+  useEffect(() => {
+    console.log("[Dashboard] showQuickTour changed to:", showQuickTour);
+  }, [showQuickTour]);
 
   const handleSkipWelcome = async () => {
     setShowWelcomePage(false);
@@ -197,6 +195,40 @@ export default function DashboardLayoutClient({
     const savedTheme = localStorage.getItem('theme') as ThemeMode || 'light'
     setTheme(savedTheme)
     applyTheme(savedTheme)
+  }, [])
+
+  // Header auto-hide on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDelta = currentScrollY - lastScrollY.current;
+
+      // At the top of the page, always show header
+      if (currentScrollY < 50) {
+        setHeaderVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
+      }
+
+      // Only trigger if scroll distance exceeds threshold
+      if (Math.abs(scrollDelta) < scrollThreshold) {
+        return;
+      }
+
+      // Scrolling down - hide header
+      if (scrollDelta > 0 && currentScrollY > 100) {
+        setHeaderVisible(false);
+      }
+      // Scrolling up - show header
+      else if (scrollDelta < 0) {
+        setHeaderVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [])
 
   const applyTheme = (mode: ThemeMode) => {
@@ -297,78 +329,42 @@ export default function DashboardLayoutClient({
           onSkip={handleSkipTour}
         />
       )}
-      {/* Mobile Top Navigation */}
-      <header className="md:hidden fixed top-0 left-0 right-0 bg-card border-b border-border z-50">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Link href="/dashboard" className="flex items-center">
+      {/* Mobile Top Navigation - Auto-hide on scroll */}
+      <header
+        className={`md:hidden fixed top-0 left-0 right-0 bg-card border-b border-border z-50 transition-transform duration-300 safe-area-top ${
+          headerVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
+        <div className="flex items-center justify-between px-3 py-2">
+          <Link href="/dashboard" className="flex items-center flex-1">
             <Image
               src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo%20(1).svg"
               alt="Bovinsights"
-              width={120}
-              height={30}
-              className="h-8 w-auto"
+              width={180}
+              height={45}
+              className="h-12 w-auto"
               priority
             />
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={cycleTheme}
               className="p-2 hover:bg-muted rounded-lg transition-colors"
               title={getThemeLabel()}
             >
-              <span className="text-xl">{getThemeIcon()}</span>
+              <span className="text-lg">{getThemeIcon()}</span>
             </button>
             <NotificacoesDropdown />
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 hover:bg-muted rounded-lg transition-colors"
+            <Link
+              href="/dashboard/configuracoes"
+              className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center hover:opacity-90 transition-opacity"
             >
-              <span className="text-xl">{mobileMenuOpen ? '✕' : '☰'}</span>
-            </button>
+              <span className="font-display text-sm text-white">
+                {userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+              </span>
+            </Link>
           </div>
         </div>
-
-        {/* Mobile Menu Expandido */}
-        {mobileMenuOpen && (
-          <div className="bg-card border-t border-border animate-fade-in">
-            <div className="grid grid-cols-4 gap-1 p-2">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all ${
-                    isActive(item.href)
-                      ? 'bg-primary/20 text-primary'
-                      : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'
-                  }`}
-                >
-                  <span className="text-2xl">{item.icon}</span>
-                  <span className="text-xs font-semibold text-center leading-tight">{item.label}</span>
-                </Link>
-              ))}
-              <Link
-                href="/dashboard/configuracoes"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all ${
-                  isActive('/dashboard/configuracoes')
-                    ? 'bg-primary/20 text-primary'
-                    : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'
-                }`}
-              >
-                <span className="text-2xl">⚙️</span>
-                <span className="text-xs font-semibold">Config</span>
-              </Link>
-              <button
-                onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
-                className="flex flex-col items-center gap-1 p-3 rounded-lg text-error hover:bg-error/10 transition-all"
-              >
-                <span className="text-2xl">🚪</span>
-                <span className="text-xs font-semibold">Sair</span>
-              </button>
-            </div>
-          </div>
-        )}
       </header>
 
       {/* Desktop Sidebar - Hidden on mobile */}
@@ -522,16 +518,14 @@ export default function DashboardLayoutClient({
           </div>
         </header>
 
-        {/* Mobile Page Title */}
-        <div className="md:hidden bg-card/50 border-b border-border px-4 py-3">
-          <h2 className="font-display text-2xl text-foreground">{getPageTitle()}</h2>
-        </div>
-
-        {/* Page Content */}
-        <div id="dashboard" className="p-4 md:p-8">
+        {/* Page Content - Extra padding at bottom for mobile nav */}
+        <div id="dashboard" className="p-4 md:p-8 pb-24 md:pb-8">
           {children}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   )
 }

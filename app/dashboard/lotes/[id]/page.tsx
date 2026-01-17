@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { getLoteById, deleteLote, LoteWithPiquete } from '@/lib/services/lotes.service'
@@ -43,14 +43,12 @@ export default function LoteDetalhesPage() {
   const [lote, setLote] = useState<LoteWithPiquete | null>(null)
   const [despesas, setDespesas] = useState<Despesa[]>([])
   const [manejos, setManejos] = useState<Manejo[]>([])
-  const [pesagens, setPesagens] = useState<PesagemWithDetails[]>([])
   const [pesagensResumo, setPesagensResumo] = useState<PesagemResumo[]>([])
   const [custosMes, setCustosMes] = useState<CustoCabecaMes[]>([])
   const [resumoFinanceiro, setResumoFinanceiro] = useState<ResumoFinanceiroLote | null>(null)
   const [precoArroba, setPrecoArroba] = useState<number>(0)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
-  const [showDespesaForm, setShowDespesaForm] = useState(false)
 
   // Estados para modal de troca de piquete
   const [showTrocaPiquete, setShowTrocaPiquete] = useState(false)
@@ -59,13 +57,9 @@ export default function LoteDetalhesPage() {
   const [piqueteSelecionado, setPiqueteSelecionado] = useState<string>('')
   const [salvandoTroca, setSalvandoTroca] = useState(false)
 
-  useEffect(() => {
-    if (id) {
-      loadData()
-    }
-  }, [id])
+  const loadData = useCallback(async () => {
+    if (!id) return
 
-  const loadData = async () => {
     try {
       setLoading(true)
 
@@ -92,7 +86,6 @@ export default function LoteDetalhesPage() {
         setDespesas(despesasData)
         setCustosMes(custosData)
         setManejos(manejosData)
-        setPesagens(pesagensData)
         setResumoFinanceiro(resumoData)
 
         // Agrupar pesagens por data para criar resumo
@@ -140,7 +133,11 @@ export default function LoteDetalhesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const handleDelete = async () => {
     if (!confirm('Tem certeza que deseja excluir este lote? Esta ação não pode ser desfeita.')) {
@@ -256,19 +253,21 @@ export default function LoteDetalhesPage() {
   const faseCiclo = getFaseCiclo(diasNoLote)
 
   const kpis = [
-    { label: 'Animais (cab)', value: lote.total_animais },
+    { label: 'Animais (cab)', value: lote.total_animais, icon: '🐮' },
     {
       label: 'Peso Médio (kg)',
       value: lote.peso_medio.toFixed(1),
       subValue: `${(lote.peso_medio / 30).toFixed(1)} @`,
+      icon: '⚖️',
     },
-    { label: 'Dias no Lote', value: diasNoLote, subValue: faseCiclo.fase },
+    { label: 'Dias no Lote', value: diasNoLote, subValue: faseCiclo.fase, icon: '📅' },
     {
       label: 'Custo/Cabeça (Mês) (R$)',
       value:
         custoMesAtual && lote.total_animais > 0
           ? custoMesAtual.custoCabeca.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
           : '-',
+      icon: '💰',
     },
   ]
 

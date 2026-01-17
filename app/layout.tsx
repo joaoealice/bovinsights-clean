@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Bebas_Neue, Crimson_Pro, Space_Mono } from "next/font/google"
 import "./globals.css"
 import { Toaster } from 'react-hot-toast'
@@ -21,11 +21,35 @@ const spaceMono = Space_Mono({
   variable: '--font-space',
 })
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#8e6a36',
+}
+
 export const metadata: Metadata = {
   title: "Bovinsights - Gestão Pecuária Inteligente",
   description: "Sistema completo de gestão para fazendas de gado. Tecnologia que entende o gado!",
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Bovinsights',
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: '/favicon.ico',
+    apple: [
+      { url: '/icons/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
+    ],
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
   },
 }
 
