@@ -148,7 +148,7 @@ export default function ConferenciaAlimentar({
 
   if (loading) {
     return (
-      <div className="card-leather p-6 animate-pulse">
+      <div className="border rounded-lg p-6 animate-pulse">
         <div className="h-6 bg-muted/30 rounded w-1/3 mb-4"></div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="h-24 bg-muted/30 rounded"></div>
@@ -162,18 +162,18 @@ export default function ConferenciaAlimentar({
 
   if (!projecao) {
     return (
-      <div className="card-leather p-6 text-center">
+      <div className="border rounded-lg p-6 text-center">
         <p className="text-muted-foreground">Dados insuficientes para projeção</p>
       </div>
     )
   }
 
   return (
-    <div className="card-leather p-6 border-2 border-primary/20">
+    <div className="border rounded-lg p-6">
       {/* Header simplificado */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <h3 className="font-display text-lg">NUTRIÇÃO</h3>
+          <h3 className="font-display text-xl">NUTRIÇÃO</h3>
           <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full font-medium">
             {projecao.sistema_label}
           </span>
@@ -206,8 +206,7 @@ export default function ConferenciaAlimentar({
         <div className="space-y-4">
           {/* Cards de projeção automática */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {/* MS/animal/dia */}
-            <div className="bg-primary/10 rounded-lg p-4 text-center border border-primary/30">
+            <div className="bg-card border rounded-lg p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">MS/animal/dia</p>
               <p className="font-mono font-bold text-2xl text-primary">
                 {projecao.consumo_ms_animal_dia.toFixed(1)}
@@ -215,28 +214,25 @@ export default function ConferenciaAlimentar({
               <p className="text-xs text-muted-foreground">kg</p>
             </div>
 
-            {/* MS/lote/dia */}
-            <div className="bg-success/10 rounded-lg p-4 text-center border border-success/30">
+            <div className="bg-card border rounded-lg p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">MS/lote/dia</p>
-              <p className="font-mono font-bold text-2xl text-success">
+              <p className="font-mono font-bold text-2xl text-primary">
                 {projecao.consumo_ms_lote_dia.toFixed(0)}
               </p>
               <p className="text-xs text-muted-foreground">kg</p>
             </div>
 
-            {/* MS/lote/mês */}
-            <div className="bg-accent/10 rounded-lg p-4 text-center border border-accent/30">
+            <div className="bg-card border rounded-lg p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">MS/lote/mês</p>
-              <p className="font-mono font-bold text-2xl text-accent">
+              <p className="font-mono font-bold text-2xl text-primary">
                 {(projecao.consumo_ms_lote_mes / 1000).toFixed(1)}
               </p>
               <p className="text-xs text-muted-foreground">ton</p>
             </div>
 
-            {/* GMD esperado */}
-            <div className="bg-warning/10 rounded-lg p-4 text-center border border-warning/30">
+            <div className="bg-card border rounded-lg p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">GMD esperado</p>
-              <p className="font-mono font-bold text-2xl text-warning">
+              <p className="font-mono font-bold text-2xl text-primary">
                 {projecao.gmd_range}
               </p>
               <p className="text-xs text-muted-foreground">kg/dia</p>
@@ -245,32 +241,30 @@ export default function ConferenciaAlimentar({
 
           {/* Cards de Projeção de Ganho - Quadrados lado a lado */}
           <div className="grid grid-cols-3 gap-3">
-            {/* p-GMDL - Ganho Médio Diário Lote */}
             {(() => {
               const gmdMedio = (configSistema.gmd_minimo + configSistema.gmd_maximo) / 2
               const gmdlKg = gmdMedio * quantidadeAnimais
               const gmdlArroba = gmdlKg / 30
               return (
-                <div className="bg-gradient-to-br from-success/10 to-success/5 rounded-lg p-3 border border-success/30 aspect-square flex flex-col justify-center text-center">
+                <div className="bg-card border rounded-lg p-4 text-center">
                   <p className="text-xs text-muted-foreground font-semibold mb-1">p-GMDL</p>
-                  <p className="font-mono font-bold text-xl md:text-2xl text-success">
+                  <p className="font-mono font-bold text-xl md:text-2xl text-primary">
                     {gmdlKg.toFixed(1)}
                   </p>
                   <p className="text-xs text-muted-foreground">kg/dia</p>
-                  <p className="text-xs text-success font-medium mt-1">
+                  <p className="text-xs text-primary font-medium mt-1">
                     {gmdlArroba.toFixed(2)} @
                   </p>
                 </div>
               )
             })()}
 
-            {/* p-GMUM - Ganho Médio Unidade Mês */}
             {(() => {
               const gmdMedio = (configSistema.gmd_minimo + configSistema.gmd_maximo) / 2
               const gmumKg = gmdMedio * 31
               const gmumArroba = gmumKg / 30
               return (
-                <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-3 border border-primary/30 aspect-square flex flex-col justify-center text-center">
+                <div className="bg-card border rounded-lg p-4 text-center">
                   <p className="text-xs text-muted-foreground font-semibold mb-1">p-GMUM</p>
                   <p className="font-mono font-bold text-xl md:text-2xl text-primary">
                     {gmumKg.toFixed(1)}
@@ -283,20 +277,19 @@ export default function ConferenciaAlimentar({
               )
             })()}
 
-            {/* p-GLT - Ganho Lote Total (mês) */}
             {(() => {
               const gmdMedio = (configSistema.gmd_minimo + configSistema.gmd_maximo) / 2
               const gmumKg = gmdMedio * 31
               const gltKg = gmumKg * quantidadeAnimais
               const gltArroba = gltKg / 30
               return (
-                <div className="bg-gradient-to-br from-accent/10 to-accent/5 rounded-lg p-3 border border-accent/30 aspect-square flex flex-col justify-center text-center">
+                <div className="bg-card border rounded-lg p-4 text-center">
                   <p className="text-xs text-muted-foreground font-semibold mb-1">p-GLT</p>
-                  <p className="font-mono font-bold text-xl md:text-2xl text-accent">
+                  <p className="font-mono font-bold text-xl md:text-2xl text-primary">
                     {(gltKg / 1000).toFixed(2)}
                   </p>
                   <p className="text-xs text-muted-foreground">ton/mês</p>
-                  <p className="text-xs text-accent font-medium mt-1">
+                  <p className="text-xs text-primary font-medium mt-1">
                     {gltArroba.toFixed(1)} @
                   </p>
                 </div>
@@ -306,56 +299,36 @@ export default function ConferenciaAlimentar({
 
           {/* Análises automáticas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {/* Status do consumo */}
             {analiseConsumo && (
-              <div className={`rounded-lg p-3 border flex items-center gap-3 ${
-                analiseConsumo.status === 'otimo' ? 'bg-success/10 border-success/30' :
-                analiseConsumo.status === 'atencao' ? 'bg-warning/10 border-warning/30' :
-                analiseConsumo.status === 'alerta' ? 'bg-error/10 border-error/30' :
-                'bg-muted/10 border-border'
-              }`}>
-                <span className={`text-2xl ${analiseConsumo.cor}`}>{analiseConsumo.icone}</span>
-                <div>
-                  <p className="text-xs text-muted-foreground">Consumo</p>
-                  <p className={`font-medium ${analiseConsumo.cor}`}>{analiseConsumo.mensagem}</p>
-                  {consumoMedioReal !== null && (
-                    <p className="text-xs text-muted-foreground">
-                      Real: {consumoMedioReal.toFixed(0)} kg/dia (média 7d)
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Status do GMD */}
-            <div className={`rounded-lg p-3 border flex items-center gap-3 ${
-              analiseGMD.status === 'otimo' ? 'bg-success/10 border-success/30' :
-              analiseGMD.status === 'atencao' ? 'bg-warning/10 border-warning/30' :
-              analiseGMD.status === 'alerta' ? 'bg-error/10 border-error/30' :
-              'bg-muted/10 border-border'
-            }`}>
-              <span className={`text-2xl ${analiseGMD.cor}`}>{analiseGMD.icone}</span>
-              <div>
-                <p className="text-xs text-muted-foreground">Desempenho</p>
-                <p className={`font-medium ${analiseGMD.cor}`}>{analiseGMD.mensagem}</p>
-                {gmdReal !== null && (
+              <div className="rounded-lg p-3 border bg-card">
+                <p className="text-xs text-muted-foreground">Consumo</p>
+                <p className="font-medium text-foreground">{analiseConsumo.mensagem}</p>
+                {consumoMedioReal !== null && (
                   <p className="text-xs text-muted-foreground">
-                    GMD real: {gmdReal.toFixed(3)} kg/dia
+                    Real: {consumoMedioReal.toFixed(0)} kg/dia (média 7d)
                   </p>
                 )}
               </div>
+            )}
+
+            <div className="rounded-lg p-3 border bg-card">
+              <p className="text-xs text-muted-foreground">Desempenho</p>
+              <p className="font-medium text-foreground">{analiseGMD.mensagem}</p>
+              {gmdReal !== null && (
+                <p className="text-xs text-muted-foreground">
+                  GMD real: {gmdReal.toFixed(3)} kg/dia
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Botão para expandir detalhes */}
           <button
             onClick={() => setMostrarAvancado(!mostrarAvancado)}
             className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
           >
-            {mostrarAvancado ? '▲' : '▼'} {mostrarAvancado ? 'Ocultar' : 'Ver'} detalhes
+            {mostrarAvancado ? 'Ocultar' : 'Ver'} detalhes
           </button>
 
-          {/* Detalhes avançados (ocultos por padrão) */}
           {mostrarAvancado && (
             <div className="bg-muted/10 rounded-lg p-4 space-y-3 text-sm">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -377,7 +350,6 @@ export default function ConferenciaAlimentar({
                 </div>
               </div>
 
-              {/* Histórico recente */}
               {consumoDiario.length > 0 && (
                 <div className="mt-4">
                   <p className="text-xs text-muted-foreground mb-2">Últimas leituras (MS kg/dia)</p>
@@ -440,7 +412,6 @@ export default function ConferenciaAlimentar({
             </div>
           </div>
 
-          {/* Preview do consumo */}
           {fornecidoKg && (
             <div className="bg-primary/10 rounded-lg p-3 border border-primary/30">
               <p className="text-sm font-medium">Consumo calculado:</p>
