@@ -1,7 +1,8 @@
+'use client'
+
 interface KPI {
   label: string
   value: string | number
-  icon: string
   subValue?: string
   trend?: {
     value: string
@@ -19,25 +20,25 @@ export default function LoteKPIs({ kpis }: LoteKPIsProps) {
       {kpis.map((kpi, index) => (
         <div
           key={index}
-          className="card-leather p-6 animate-slide-in"
-          style={{ animationDelay: `${index * 0.1}s` }}
+          className="bg-card border border-border rounded-xl p-4 min-h-[100px]"
         >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-3xl">{kpi.icon}</span>
-            {kpi.trend && (
-              <span
-                className={`text-sm font-mono font-bold ${
-                  kpi.trend.positive ? 'text-success' : 'text-error'
-                }`}
-              >
-                {kpi.trend.value}
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground mb-1">{kpi.label}</p>
-          <p className="font-display text-3xl">{kpi.value}</p>
-          {kpi.subValue && (
-            <p className="text-sm text-muted-foreground mt-1">{kpi.subValue}</p>
+          <p className="text-sm font-medium text-muted-foreground mb-2">
+            {kpi.label}
+          </p>
+          <p className="text-2xl font-bold tabular-nums text-foreground">
+            {kpi.value}
+          </p>
+          {(kpi.subValue || kpi.trend) && (
+            <div className="flex items-center gap-2 mt-1">
+              {kpi.subValue && (
+                <span className="text-xs text-muted-foreground">{kpi.subValue}</span>
+              )}
+              {kpi.trend && (
+                <span className={`text-xs font-medium ${kpi.trend.positive ? 'text-success' : 'text-error'}`}>
+                  {kpi.trend.positive ? '↑' : '↓'} {kpi.trend.value}
+                </span>
+              )}
+            </div>
           )}
         </div>
       ))}

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,266 +6,343 @@
 
 @layer base {
   :root {
-    --font-bebas: 'Bebas Neue', sans-serif;
-    --font-crimson: 'Crimson Pro', serif;
-    --font-space: 'Space Mono', monospace;
-
-    /* Modo Claro */
-    --background: 43 40 36;
-    --foreground: 250 248 245;
-    --card: 52 48 43;
-    --card-foreground: 250 248 245;
-    --popover: 52 48 43;
-    --popover-foreground: 250 248 245;
-    --primary: 142 106 54;
+    /* Modo Padrao - Neutro */
+    --background: 250 250 250;
+    --foreground: 23 23 23;
+    --card: 255 255 255;
+    --card-foreground: 23 23 23;
+    --popover: 255 255 255;
+    --popover-foreground: 23 23 23;
+    --primary: 59 130 246;
     --primary-foreground: 255 255 255;
-    --secondary: 76 112 68;
+    --secondary: 100 116 139;
     --secondary-foreground: 255 255 255;
-    --muted: 66 62 56;
-    --muted-foreground: 168 162 155;
-    --accent: 218 145 46;
-    --accent-foreground: 28 24 20;
-    --destructive: 220 38 38;
-    --destructive-foreground: 255 255 255;
-    --border: 76 70 62;
-    --input: 76 70 62;
-    --ring: 142 106 54;
-    --success: 76 112 68;
-    --warning: 218 145 46;
-    --error: 220 38 38;
-  }
-
-  .dark {
-    /* Modo Escuro */
-    --background: 15 12 10;
-    --foreground: 250 248 245;
-    --card: 28 24 20;
-    --card-foreground: 250 248 245;
-    --popover: 28 24 20;
-    --popover-foreground: 250 248 245;
-    --primary: 218 165 100;
-    --primary-foreground: 15 12 10;
-    --secondary: 106 142 98;
-    --secondary-foreground: 15 12 10;
-    --muted: 43 40 36;
-    --muted-foreground: 168 162 155;
-    --accent: 238 185 106;
-    --accent-foreground: 15 12 10;
+    --muted: 241 245 249;
+    --muted-foreground: 100 116 139;
+    --accent: 34 197 94;
+    --accent-foreground: 255 255 255;
     --destructive: 239 68 68;
     --destructive-foreground: 255 255 255;
-    --border: 52 48 43;
-    --input: 52 48 43;
-    --ring: 218 165 100;
-    --success: 106 142 98;
-    --warning: 238 185 106;
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 59 130 246;
+    --success: 34 197 94;
+    --warning: 245 158 11;
     --error: 239 68 68;
   }
 
-  .system {
-    /* Modo System - Cores claras e vibrantes */
-    --background: 252 251 248;
-    --foreground: 28 24 20;
+  /* ============================
+     MODO ESCRITORIO - Paleta Bovinsights
+     Cores institucionais da marca
+     ============================ */
+  .theme-escritorio {
+    /* Background: Branco puro para ambiente corporativo */
+    --background: 255 255 255;
+    --foreground: 28 25 23;
+
+    /* Cards: Branco com bordas sutis */
     --card: 255 255 255;
-    --card-foreground: 28 24 20;
+    --card-foreground: 28 25 23;
     --popover: 255 255 255;
-    --popover-foreground: 28 24 20;
-    --primary: 166 124 82;
+    --popover-foreground: 28 25 23;
+
+    /* Primary: Verde Bovinsights - Confianca, Natureza */
+    --primary: 22 101 52;
     --primary-foreground: 255 255 255;
-    --secondary: 88 130 78;
+
+    /* Secondary: Marrom Terra - Campo, Solidez */
+    --secondary: 120 83 55;
     --secondary-foreground: 255 255 255;
-    --muted: 245 243 238;
-    --muted-foreground: 100 95 88;
-    --accent: 232 168 72;
-    --accent-foreground: 28 24 20;
-    --destructive: 220 53 53;
+
+    /* Muted: Cinza quente */
+    --muted: 245 243 241;
+    --muted-foreground: 87 83 78;
+
+    /* Accent: Dourado/Laranja - Destaque, Valor */
+    --accent: 180 83 9;
+    --accent-foreground: 255 255 255;
+
+    /* Destructive */
+    --destructive: 185 28 28;
     --destructive-foreground: 255 255 255;
-    --border: 230 225 215;
-    --input: 230 225 215;
-    --ring: 166 124 82;
-    --success: 88 130 78;
-    --warning: 232 168 72;
-    --error: 220 53 53;
+
+    /* Borders */
+    --border: 231 229 228;
+    --input: 231 229 228;
+    --ring: 22 101 52;
+
+    /* Status */
+    --success: 22 101 52;
+    --warning: 180 83 9;
+    --error: 185 28 28;
   }
 
-  /* System mode - Fontes mais vistosas */
-  .system h1, .system h2, .system h3, .system h4, .system h5, .system h6,
-  .system .font-display {
-    letter-spacing: 0.05em;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  /* Modo Escritorio Escuro */
+  .theme-escritorio.dark {
+    --background: 28 25 23;
+    --foreground: 250 250 249;
+    --card: 41 37 36;
+    --card-foreground: 250 250 249;
+    --popover: 41 37 36;
+    --popover-foreground: 250 250 249;
+    --primary: 74 222 128;
+    --primary-foreground: 28 25 23;
+    --secondary: 168 137 110;
+    --secondary-foreground: 28 25 23;
+    --muted: 68 64 60;
+    --muted-foreground: 168 162 158;
+    --accent: 251 191 36;
+    --accent-foreground: 28 25 23;
+    --destructive: 248 113 113;
+    --destructive-foreground: 28 25 23;
+    --border: 68 64 60;
+    --input: 68 64 60;
+    --ring: 74 222 128;
+    --success: 74 222 128;
+    --warning: 251 191 36;
+    --error: 248 113 113;
   }
 
-  .system .font-display {
-    font-weight: 400;
+  .dark {
+    /* Modo Escuro Padrao */
+    --background: 15 15 15;
+    --foreground: 250 250 250;
+    --card: 23 23 23;
+    --card-foreground: 250 250 250;
+    --popover: 23 23 23;
+    --popover-foreground: 250 250 250;
+    --primary: 96 165 250;
+    --primary-foreground: 15 15 15;
+    --secondary: 148 163 184;
+    --secondary-foreground: 15 15 15;
+    --muted: 38 38 38;
+    --muted-foreground: 148 163 184;
+    --accent: 74 222 128;
+    --accent-foreground: 15 15 15;
+    --destructive: 248 113 113;
+    --destructive-foreground: 15 15 15;
+    --border: 38 38 38;
+    --input: 38 38 38;
+    --ring: 96 165 250;
+    --success: 74 222 128;
+    --warning: 251 191 36;
+    --error: 248 113 113;
   }
 
-  .system body {
-    font-size: 19px;
-  }
-
-  .system .card-leather {
-    box-shadow: 0 4px 20px rgba(166, 124, 82, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
-  }
-
-  .system .btn-primary {
-    box-shadow: 0 4px 14px rgba(166, 124, 82, 0.35);
-  }
-
-  .system .btn-secondary {
-    box-shadow: 0 4px 14px rgba(88, 130, 78, 0.35);
-  }
-  
   * {
     @apply border-border;
   }
-  
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
-    @apply bg-background text-foreground font-body;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    font-size: 18px;
+    @apply bg-background text-foreground;
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 400;
   }
 
-  /* Fontes maiores para melhor manuseio */
+  /* Tamanho base para inputs */
   input, select, textarea {
-    font-size: 18px !important;
-  }
-
-  button {
-    font-size: 18px;
-  }
-
-  label {
     font-size: 16px;
   }
-  
-  /* Scrollbar personalizada */
+
+  /* Scrollbar minimalista */
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
   }
-  
+
   ::-webkit-scrollbar-track {
-    @apply bg-muted/30;
+    @apply bg-transparent;
   }
-  
+
   ::-webkit-scrollbar-thumb {
-    @apply bg-primary/40 rounded-lg;
-    transition: background-color 0.2s;
+    @apply bg-border rounded;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary/60;
+    @apply bg-muted-foreground/50;
   }
 }
 
 @layer components {
-  /* Textura de fundo */
-  .texture-grain {
-    position: relative;
+  /* ============================
+     CARD BASE - Componente padrão
+     ============================ */
+  .card-base {
+    @apply bg-card border border-border rounded-xl p-4;
+    min-height: 100px;
   }
-  
-  .texture-grain::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    opacity: 0.03;
-    pointer-events: none;
-    z-index: 1;
+
+  /* Card para métricas/KPIs */
+  .metric-card {
+    @apply bg-card border border-border rounded-xl p-4;
+    min-height: 100px;
   }
-  
-  /* Card com efeito de couro */
-  .card-leather {
-    @apply bg-card border border-border rounded-lg shadow-md;
-    position: relative;
-    overflow: hidden;
+
+  .metric-card .metric-label {
+    @apply text-sm font-medium text-muted-foreground mb-1;
   }
-  
-  .card-leather::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, transparent 0%, rgba(142, 106, 54, 0.05) 100%);
-    pointer-events: none;
+
+  .metric-card .metric-value {
+    @apply text-2xl font-bold text-foreground;
   }
-  
-  /* Glass effect */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+
+  .metric-card .metric-subinfo {
+    @apply text-xs text-muted-foreground mt-1;
   }
-  
-  /* Botões */
+
+  /* ============================
+     BOTÕES PADRONIZADOS
+     ============================ */
+
+  /* Primary Button */
   .btn-primary {
-    @apply bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-3 rounded-lg shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95;
+    @apply inline-flex items-center justify-center gap-2;
+    @apply bg-primary text-primary-foreground;
+    @apply font-semibold text-sm;
+    @apply px-4 py-3 rounded-lg;
+    @apply transition-colors duration-150;
+    @apply hover:bg-primary/90;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    height: 44px;
   }
-  
+
+  /* Secondary Button */
   .btn-secondary {
-    @apply bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold px-6 py-3 rounded-lg shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95;
+    @apply inline-flex items-center justify-center gap-2;
+    @apply bg-muted text-foreground;
+    @apply font-semibold text-sm;
+    @apply px-4 py-3 rounded-lg;
+    @apply transition-colors duration-150;
+    @apply hover:bg-muted/80;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    height: 44px;
   }
-  
-  .btn-outline {
-    @apply border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold px-6 py-3 rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95;
+
+  /* Danger Button */
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply bg-destructive text-destructive-foreground;
+    @apply font-semibold text-sm;
+    @apply px-4 py-3 rounded-lg;
+    @apply transition-colors duration-150;
+    @apply hover:bg-destructive/90;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    height: 44px;
   }
-  
-  /* Input estilizado */
+
+  /* Ghost Button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply bg-transparent text-foreground;
+    @apply font-medium text-sm;
+    @apply px-4 py-3 rounded-lg;
+    @apply transition-colors duration-150;
+    @apply hover:bg-muted;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    height: 44px;
+  }
+
+  /* ============================
+     INPUT PADRONIZADO
+     ============================ */
   .input-field {
-    @apply bg-muted/30 border border-input text-foreground px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200;
+    @apply w-full px-4 py-3 rounded-lg;
+    @apply bg-muted/50 border border-border;
+    @apply text-foreground placeholder:text-muted-foreground;
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+    @apply transition-all duration-150;
+    height: 44px;
   }
-  
-  /* Animações */
-  @keyframes slideInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+
+  /* ============================
+     STATUS BADGES
+     ============================ */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
   }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+
+  .badge-success {
+    @apply bg-success/10 text-success;
   }
-  
-  @keyframes pulse-glow {
-    0%, 100% {
-      box-shadow: 0 0 0 0 rgba(142, 106, 54, 0.4);
-    }
-    50% {
-      box-shadow: 0 0 0 10px rgba(142, 106, 54, 0);
-    }
+
+  .badge-warning {
+    @apply bg-warning/10 text-warning;
   }
-  
-  .animate-slide-in {
-    animation: slideInUp 0.5s ease-out;
+
+  .badge-error {
+    @apply bg-error/10 text-error;
   }
-  
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-in;
+
+  .badge-muted {
+    @apply bg-muted text-muted-foreground;
   }
-  
-  .animate-pulse-glow {
-    animation: pulse-glow 2s infinite;
+
+  /* ============================
+     HIERARQUIA DE TEXTO
+     ============================ */
+
+  /* Títulos de página */
+  .page-title {
+    @apply text-2xl font-bold text-foreground;
+  }
+
+  /* Títulos de seção */
+  .section-title {
+    @apply text-lg font-semibold text-foreground;
+  }
+
+  /* Labels */
+  .label {
+    @apply text-sm font-medium text-muted-foreground;
+  }
+
+  /* Valores numéricos em destaque */
+  .value-highlight {
+    @apply text-2xl font-bold text-foreground;
+  }
+
+  .value-highlight-lg {
+    @apply text-3xl font-bold text-foreground;
+  }
+
+  /* ============================
+     TABELAS
+     ============================ */
+  .table-header {
+    @apply text-xs font-medium text-muted-foreground uppercase tracking-wide;
+  }
+
+  .table-cell {
+    @apply text-sm text-foreground py-3 px-4;
+  }
+
+  /* ============================
+     UTILITÁRIOS DE COMPATIBILIDADE
+     ============================ */
+
+  /* Manter compatibilidade com código legado */
+  .card-leather {
+    @apply bg-card border border-border rounded-xl;
+  }
+
+  .font-display {
+    @apply font-semibold;
+  }
+
+  .font-mono {
+    font-variant-numeric: tabular-nums;
   }
 }
 
 @layer utilities {
-  .text-shadow-sm {
-    text-shadow: 0 1px 2px rgba(28, 24, 20, 0.3);
-  }
-
-  .text-shadow-md {
-    text-shadow: 0 2px 4px rgba(28, 24, 20, 0.4);
-  }
-
-  /* Safe area for PWA - notch/home indicator */
+  /* Safe area for PWA */
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
   }
@@ -274,36 +351,8 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  .safe-area-left {
-    padding-left: env(safe-area-inset-left);
-  }
-
-  .safe-area-right {
-    padding-right: env(safe-area-inset-right);
-  }
-
-  /* Header auto-hide animation */
-  .header-hidden {
-    transform: translateY(-100%);
-  }
-
-  .header-visible {
-    transform: translateY(0);
-  }
-
-  /* Fade in down animation */
-  @keyframes fadeInDown {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-fade-in-down {
-    animation: fadeInDown 0.2s ease-out;
+  /* Tabular numbers para alinhamento */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }

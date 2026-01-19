@@ -16,6 +16,7 @@ import {
   ESTADOS_BR,
   type PerfilCompleto
 } from '@/lib/services/perfil.service'
+import ThemeSelector from '@/components/ui/ThemeSelector'
 
 export default function ConfiguracoesPage() {
   const router = useRouter()
@@ -491,6 +492,18 @@ export default function ConfiguracoesPage() {
               />
             </div>
           </div>
+        </div>
+
+        {/* Aparencia */}
+        <div className="bg-card border border-border rounded-xl p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span className="text-2xl">4</span>
+            Aparencia
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Escolha o modo de interface e esquema de cores da aplicacao.
+          </p>
+          <ThemeSelector />
         </div>
 
         {/* Botões de Ação */}
