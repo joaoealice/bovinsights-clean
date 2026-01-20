@@ -33,6 +33,7 @@ export interface Database {
           onboarding_completed: boolean | null
           quick_tour_completed: boolean | null
           quick_tour_skipped: boolean | null
+          praca_preferida: string | null
           created_at: string
           updated_at: string
         }
@@ -59,6 +60,7 @@ export interface Database {
           onboarding_completed?: boolean | null
           quick_tour_completed?: boolean | null
           quick_tour_skipped?: boolean | null
+          praca_preferida?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -85,6 +87,7 @@ export interface Database {
           onboarding_completed?: boolean | null
           quick_tour_completed?: boolean | null
           quick_tour_skipped?: boolean | null
+          praca_preferida?: string | null
           created_at?: string
           updated_at?: string
         }

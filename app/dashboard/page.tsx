@@ -17,6 +17,11 @@ export default function DashboardPage() {
         <TotalArrobasCard />
       </section>
 
+      {/* Linha explicativa sobre Cotação vs Indicadores */}
+      <p className="text-xs text-muted-foreground text-center -mt-4">
+        💡 Entenda os valores: a Cotacao mostra o preco praticado hoje. O Indicador mostra a tendencia media do mercado.
+      </p>
+
       {/* Card de Clima */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ClimaCard />

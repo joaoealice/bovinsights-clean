@@ -14,10 +14,10 @@ import {
   DIAS_RECUPERACAO_PASTO
 } from '@/lib/services/areas-pastagem.service'
 import { getDespesasPorLote, getCustoCabecaMes, Despesa, getResumoFinanceiroLote, ResumoFinanceiroLote } from '@/lib/services/financeiro.service'
-import { getMarketPrices } from '@/lib/services/mercado.service'
+import { getMarketPriceByRegion } from '@/lib/services/mercado.service'
+import { getPerfilFazenda } from '@/lib/services/perfil.service'
 import { getManejosPorLote, Manejo, getTipoManejoInfo } from '@/lib/services/manejo.service'
 import { getPesagensByLote, PesagemWithDetails } from '@/lib/services/pesagens.service'
-import LoteKPIs from '@/components/lotes/LoteKPIs'
 import GraficoEvolucaoPeso from '@/components/lotes/GraficoEvolucaoPeso'
 import ConferenciaAlimentar from '@/components/nutricao/ConferenciaAlimentar'
 import toast from 'react-hot-toast'
@@ -47,6 +47,8 @@ export default function LoteDetalhesPage() {
   const [custosMes, setCustosMes] = useState<CustoCabecaMes[]>([])
   const [resumoFinanceiro, setResumoFinanceiro] = useState<ResumoFinanceiroLote | null>(null)
   const [precoArroba, setPrecoArroba] = useState<number>(0)
+  const [pracaPreferida, setPracaPreferida] = useState<string | null>(null)
+  const [cotacaoIndisponivel, setCotacaoIndisponivel] = useState(false)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
 
@@ -63,12 +65,24 @@ export default function LoteDetalhesPage() {
     try {
       setLoading(true)
 
-      const prices = await getMarketPrices()
-      const bahiaSul = prices.find(p =>
-        p.region?.toLowerCase().includes('ba sul') ||
-        p.region?.toLowerCase().includes('bahia sul')
-      )
-      const preco = bahiaSul?.price_cash || prices[0]?.price_cash || 300
+      // Buscar praca preferida do perfil
+      const perfil = await getPerfilFazenda()
+      const praca = perfil?.praca_preferida || null
+      setPracaPreferida(praca)
+
+      // Buscar cotacao da praca preferida
+      let preco = 0
+      if (praca) {
+        const cotacao = await getMarketPriceByRegion(praca)
+        if (cotacao) {
+          preco = cotacao.price_cash
+          setCotacaoIndisponivel(false)
+        } else {
+          setCotacaoIndisponivel(true)
+        }
+      } else {
+        setCotacaoIndisponivel(true)
+      }
       setPrecoArroba(preco)
 
       const loteData = await getLoteById(id)
@@ -228,20 +242,26 @@ export default function LoteDetalhesPage() {
   }
   const faseCiclo = getFaseCiclo(diasNoLote)
 
-  const kpis = [
-    { label: 'Animais', value: lote.total_animais },
-    { label: 'Peso Medio', value: `${lote.peso_medio.toFixed(0)} kg`, subValue: `${(lote.peso_medio / 30).toFixed(1)} @` },
-    { label: 'Dias no Lote', value: diasNoLote, subValue: faseCiclo },
-    { label: 'Custo/Cab (Mes)', value: custoMesAtual && lote.total_animais > 0 ? formatCurrency(custoMesAtual.custoCabeca) : '-' },
-  ]
-
   const totalDespesas = despesas.reduce((sum, d) => sum + d.valor, 0)
 
-  const gmdReal = (() => {
-    const pesoMedioInicial = lote.peso_total_entrada && lote.quantidade_total
-      ? lote.peso_total_entrada / lote.quantidade_total
-      : 0
+  // Calculos para dados de entrada
+  const pesoMedioInicial = lote.peso_total_entrada && lote.quantidade_total
+    ? lote.peso_total_entrada / lote.quantidade_total
+    : 0
+  const pesoTotalInicial = lote.peso_total_entrada || 0
 
+  // Calculos para situacao atual
+  const pesoMedioAtual = lote.peso_medio
+  const pesoTotalAtual = lote.peso_medio * lote.total_animais
+  const quantidadeAtual = lote.total_animais
+
+  // Calculos para evolucao
+  const ganhoTotalKg = pesoMedioInicial > 0 && pesoMedioAtual > 0
+    ? pesoMedioAtual - pesoMedioInicial
+    : 0
+
+  // GMD Real calculado
+  const gmdReal = (() => {
     if (pesagensResumo.length >= 1 && pesoMedioInicial > 0) {
       const ultimaPesagem = pesagensResumo[0]
       const ganhoTotal = ultimaPesagem.pesoMedio - pesoMedioInicial
@@ -262,46 +282,41 @@ export default function LoteDetalhesPage() {
     return null
   })()
 
+  // Status de performance baseado no GMD
+  const getStatusPerformance = () => {
+    if (gmdReal === null) return { label: 'Sem dados', cor: 'text-muted-foreground', bg: 'bg-muted/30' }
+    if (gmdReal >= 1.2) return { label: 'Excelente', cor: 'text-success', bg: 'bg-success/10' }
+    if (gmdReal >= 1.0) return { label: 'Otimo', cor: 'text-success', bg: 'bg-success/10' }
+    if (gmdReal >= 0.8) return { label: 'Bom', cor: 'text-primary', bg: 'bg-primary/10' }
+    if (gmdReal >= 0.5) return { label: 'Regular', cor: 'text-warning', bg: 'bg-warning/10' }
+    return { label: 'Abaixo', cor: 'text-error', bg: 'bg-error/10' }
+  }
+  const statusPerformance = getStatusPerformance()
+
   return (
     <div className="p-4 md:p-8 space-y-6">
-      {/* Header */}
-      <div>
+      {/* Navegacao e Acoes */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Link
           href="/dashboard/lotes"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <span>←</span> Voltar
+          <span>←</span> Voltar para Lotes
         </Link>
 
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-2xl font-bold text-foreground">{lote.nome}</h1>
-              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                lote.status === 'ativo' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
-              }`}>
-                {lote.status.toUpperCase()}
-              </span>
-            </div>
-            {lote.localizacao && (
-              <p className="text-sm text-muted-foreground">{lote.localizacao}</p>
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            {!isLoteVendido && (
-              <Link href={`/dashboard/lotes/${id}/editar`}>
-                <button className="btn-secondary">Editar</button>
-              </Link>
-            )}
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="btn-danger"
-            >
-              {deleting ? 'Excluindo...' : 'Excluir'}
-            </button>
-          </div>
+        <div className="flex gap-2">
+          {!isLoteVendido && (
+            <Link href={`/dashboard/lotes/${id}/editar`}>
+              <button className="btn-secondary">Editar</button>
+            </Link>
+          )}
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="btn-danger"
+          >
+            {deleting ? 'Excluindo...' : 'Excluir'}
+          </button>
         </div>
       </div>
 
@@ -312,107 +327,199 @@ export default function LoteDetalhesPage() {
         </div>
       )}
 
-      {/* KPIs */}
-      <LoteKPIs kpis={kpis} />
+      {/* Banner Cotacao Indisponivel */}
+      {cotacaoIndisponivel && (
+        <div className="bg-error/10 border border-error/30 rounded-xl p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-error">
+                {!pracaPreferida
+                  ? 'Praca de mercado nao configurada'
+                  : 'Cotacao indisponivel para sua praca'}
+              </p>
+              <p className="text-xs text-error/80 mt-1">
+                {!pracaPreferida
+                  ? 'Configure sua praca preferida para visualizar cotacoes e calculos financeiros.'
+                  : `Nao ha cotacao disponivel para "${pracaPreferida}". Os calculos financeiros estao desabilitados.`}
+              </p>
+            </div>
+            <Link href="/dashboard/configuracoes">
+              <button className="btn-primary text-sm whitespace-nowrap">
+                {!pracaPreferida ? 'Configurar Praca' : 'Alterar Praca'}
+              </button>
+            </Link>
+          </div>
+        </div>
+      )}
 
-      {/* Dados de Entrada */}
+      {/* 1) IDENTIDADE DO LOTE */}
+      <div className="bg-card border border-border rounded-xl p-4 md:p-6">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-foreground">{lote.nome}</h1>
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+            lote.status === 'ativo' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
+          }`}>
+            {lote.status.toUpperCase()}
+          </span>
+        </div>
+        {lote.localizacao && (
+          <p className="text-sm text-muted-foreground mt-2">{lote.localizacao}</p>
+        )}
+      </div>
+
+      {/* 2) DADOS DE ENTRADA DO LOTE */}
       <div className="bg-card border border-border rounded-xl p-4 md:p-6">
         <h2 className="text-lg font-semibold mb-4">Dados de Entrada</h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="text-center bg-muted/30 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground mb-1">Data Entrada</p>
+            <p className="text-xs text-muted-foreground mb-1">Data de Entrada</p>
             <p className="text-lg font-bold tabular-nums">
-              {new Date(lote.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+              {new Date(lote.data_entrada || lote.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
             </p>
           </div>
           <div className="text-center bg-muted/30 rounded-lg p-3">
             <p className="text-xs text-muted-foreground mb-1">Sistema</p>
-            <p className="text-lg font-bold">
-              {lote.tipo_lote === 'confinamento' ? 'Conf.' : lote.tipo_lote || '-'}
+            <p className="text-lg font-bold capitalize">
+              {lote.tipo_lote === 'confinamento' ? 'Confinamento' :
+               lote.tipo_lote === 'semiconfinamento' ? 'Semiconfinamento' :
+               lote.tipo_lote === 'pasto' ? 'Pasto' : lote.tipo_lote || '-'}
             </p>
           </div>
           <div className="text-center bg-muted/30 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground mb-1">Animais</p>
+            <p className="text-xs text-muted-foreground mb-1">Qtd. Animais</p>
             <p className="text-lg font-bold tabular-nums">{lote.quantidade_total || lote.total_animais}</p>
           </div>
           <div className="text-center bg-muted/30 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground mb-1">Peso Med. Inicial</p>
+            <p className="text-xs text-muted-foreground mb-1">Peso Medio Inicial</p>
             <p className="text-lg font-bold tabular-nums">
-              {lote.peso_total_entrada && lote.quantidade_total
-                ? `${(lote.peso_total_entrada / lote.quantidade_total).toFixed(0)} kg`
-                : '-'}
+              {pesoMedioInicial > 0 ? `${pesoMedioInicial.toFixed(0)} kg` : '-'}
             </p>
+            {pesoMedioInicial > 0 && (
+              <p className="text-xs text-muted-foreground">{(pesoMedioInicial / 30).toFixed(1)} @</p>
+            )}
           </div>
           <div className="text-center bg-muted/30 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground mb-1">Peso Total</p>
+            <p className="text-xs text-muted-foreground mb-1">Peso Total Inicial</p>
             <p className="text-lg font-bold tabular-nums">
-              {lote.peso_total_entrada ? `${lote.peso_total_entrada.toLocaleString('pt-BR')} kg` : '-'}
+              {pesoTotalInicial > 0 ? `${pesoTotalInicial.toLocaleString('pt-BR')} kg` : '-'}
             </p>
+            {pesoTotalInicial > 0 && (
+              <p className="text-xs text-muted-foreground">{(pesoTotalInicial / 30).toFixed(1)} @</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Performance */}
+      {/* 3) SITUACAO ATUAL DO LOTE */}
       <div className="bg-card border border-border rounded-xl p-4 md:p-6">
-        <h2 className="text-lg font-semibold mb-4">Performance</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <h2 className="text-lg font-semibold mb-4">Situacao Atual</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center bg-muted/30 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground mb-1">GMD</p>
+            <p className="text-xs text-muted-foreground mb-1">Qtd. Animais</p>
+            <p className="text-xl font-bold tabular-nums">{quantidadeAtual}</p>
+          </div>
+          <div className="text-center bg-muted/30 rounded-lg p-3">
+            <p className="text-xs text-muted-foreground mb-1">Peso Medio Atual</p>
             <p className="text-xl font-bold tabular-nums">
-              {(() => {
-                const pesoMedioInicial = lote.peso_total_entrada && lote.quantidade_total
-                  ? lote.peso_total_entrada / lote.quantidade_total
-                  : 0
+              {pesoMedioAtual > 0 ? `${pesoMedioAtual.toFixed(0)} kg` : '-'}
+            </p>
+            {pesoMedioAtual > 0 && (
+              <p className="text-xs text-muted-foreground">{(pesoMedioAtual / 30).toFixed(1)} @</p>
+            )}
+          </div>
+          <div className="text-center bg-muted/30 rounded-lg p-3">
+            <p className="text-xs text-muted-foreground mb-1">Peso Total Atual</p>
+            <p className="text-xl font-bold tabular-nums">
+              {pesoTotalAtual > 0 ? `${pesoTotalAtual.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg` : '-'}
+            </p>
+            {pesoTotalAtual > 0 && (
+              <p className="text-xs text-muted-foreground">{(pesoTotalAtual / 30).toFixed(1)} @</p>
+            )}
+          </div>
+          <div className="text-center bg-primary/10 rounded-lg p-3">
+            <p className="text-xs text-muted-foreground mb-1">Dias no Lote</p>
+            <p className="text-xl font-bold tabular-nums text-primary">{diasNoLote}</p>
+            <p className="text-xs text-muted-foreground">{faseCiclo}</p>
+          </div>
+        </div>
+      </div>
 
-                if (pesagensResumo.length >= 1 && pesoMedioInicial > 0) {
-                  const ultimaPesagem = pesagensResumo[0]
-                  const ganhoTotal = ultimaPesagem.pesoMedio - pesoMedioInicial
-                  if (diasNoLote > 0) {
-                    return `${(ganhoTotal / diasNoLote).toFixed(2)} kg`
-                  }
-                }
-                return '-'
-              })()}
+      {/* 4) EVOLUCAO DO REBANHO */}
+      <div className="bg-card border border-border rounded-xl p-4 md:p-6">
+        <h2 className="text-lg font-semibold mb-4">Evolucao do Rebanho</h2>
+
+        {/* Metricas de Evolucao */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+          <div className="text-center bg-muted/30 rounded-lg p-3">
+            <p className="text-xs text-muted-foreground mb-1">GMD Real</p>
+            <p className="text-xl font-bold tabular-nums">
+              {gmdReal !== null ? `${gmdReal.toFixed(2)} kg` : '-'}
             </p>
+            <p className="text-xs text-muted-foreground">kg/dia</p>
           </div>
           <div className="text-center bg-muted/30 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground mb-1">Peso Med. Atual</p>
+            <p className="text-xs text-muted-foreground mb-1">Ganho/Animal</p>
             <p className="text-xl font-bold tabular-nums">
-              {lote.peso_medio > 0 ? `${lote.peso_medio.toFixed(0)} kg` : '-'}
+              {ganhoTotalKg > 0 ? `+${ganhoTotalKg.toFixed(0)} kg` : ganhoTotalKg < 0 ? `${ganhoTotalKg.toFixed(0)} kg` : '-'}
+            </p>
+            {ganhoTotalKg !== 0 && (
+              <p className="text-xs text-muted-foreground">{(ganhoTotalKg / 30).toFixed(2)} @</p>
+            )}
+          </div>
+          <div className={`text-center rounded-lg p-3 ${statusPerformance.bg}`}>
+            <p className="text-xs text-muted-foreground mb-1">Status Performance</p>
+            <p className={`text-xl font-bold ${statusPerformance.cor}`}>
+              {statusPerformance.label}
             </p>
           </div>
+        </div>
+
+        {/* Producao de Arrobas */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           <div className="text-center bg-muted/30 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground mb-1">Ganho Total</p>
+            <p className="text-xs text-muted-foreground mb-1">Ganho Total Lote</p>
             <p className="text-xl font-bold tabular-nums">
-              {(() => {
-                const pesoMedioInicial = lote.peso_total_entrada && lote.quantidade_total
-                  ? lote.peso_total_entrada / lote.quantidade_total
-                  : 0
-                if (pesoMedioInicial > 0 && lote.peso_medio > 0) {
-                  const ganho = lote.peso_medio - pesoMedioInicial
-                  return `+${ganho.toFixed(0)} kg`
-                }
-                return '-'
-              })()}
-            </p>
-          </div>
-          <div className="text-center bg-muted/30 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground mb-1">Peso Total</p>
-            <p className="text-xl font-bold tabular-nums">
-              {lote.peso_medio > 0 && lote.total_animais > 0
-                ? `${(lote.peso_medio * lote.total_animais).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg`
+              {ganhoTotalKg !== 0 && quantidadeAtual > 0
+                ? `${(ganhoTotalKg * quantidadeAtual).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg`
                 : '-'}
             </p>
           </div>
-          <div className="text-center bg-muted/30 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground mb-1">Animais</p>
-            <p className="text-xl font-bold tabular-nums">{lote.total_animais}</p>
-          </div>
           <div className="text-center bg-primary/10 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground mb-1">Dias</p>
-            <p className="text-xl font-bold tabular-nums text-primary">{diasNoLote}</p>
+            <p className="text-xs text-muted-foreground mb-1">@ Produzida</p>
+            <p className="text-xl font-bold tabular-nums text-primary">
+              {ganhoTotalKg > 0 && quantidadeAtual > 0
+                ? `${((ganhoTotalKg * quantidadeAtual) / 30).toFixed(1)} @`
+                : '-'}
+            </p>
+          </div>
+          <div className="text-center bg-warning/10 rounded-lg p-3">
+            <p className="text-xs text-muted-foreground mb-1">Custo/@ Produzida</p>
+            <p className="text-xl font-bold tabular-nums text-warning">
+              {(() => {
+                const arrobaProduzida = ganhoTotalKg > 0 && quantidadeAtual > 0
+                  ? (ganhoTotalKg * quantidadeAtual) / 30
+                  : 0
+                const custeios = resumoFinanceiro?.custeios || 0
+                if (arrobaProduzida > 0 && custeios > 0) {
+                  return formatCurrency(custeios / arrobaProduzida)
+                }
+                return '-'
+              })()}
+            </p>
+            <p className="text-xs text-muted-foreground">custeio/@ produzida</p>
           </div>
         </div>
+
+        {/* Grafico de Evolucao */}
+        {pesagensResumo.length >= 1 && (
+          <div className="bg-muted/20 rounded-lg p-4">
+            <GraficoEvolucaoPeso
+              pesagens={pesagensResumo}
+              pesoMedioInicial={pesoMedioInicial > 0 ? pesoMedioInicial : undefined}
+              dataEntrada={lote.data_entrada}
+            />
+          </div>
+        )}
       </div>
 
       {/* Conferencia Alimentar */}
@@ -430,8 +537,21 @@ export default function LoteDetalhesPage() {
         <div className="bg-card border border-border rounded-xl p-4 md:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Resumo Financeiro</h2>
-            <span className="text-xs text-muted-foreground">Base: {formatCurrency(precoArroba)}/@</span>
+            {precoArroba > 0 ? (
+              <span className="text-xs text-muted-foreground">Base: {formatCurrency(precoArroba)}/@ ({pracaPreferida})</span>
+            ) : (
+              <span className="text-xs text-error">Cotacao indisponivel</span>
+            )}
           </div>
+
+          {/* Alerta de cotacao indisponivel */}
+          {cotacaoIndisponivel && (
+            <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 mb-4">
+              <p className="text-sm text-warning">
+                Valor do estoque e margem nao calculados. Configure sua praca de mercado nas configuracoes.
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="bg-muted/30 rounded-lg p-3">
@@ -501,23 +621,7 @@ export default function LoteDetalhesPage() {
             )}
           </div>
         ) : (
-          <div className="space-y-4">
-            {pesagensResumo.length >= 1 && (
-              <div className="bg-muted/20 rounded-lg p-4">
-                <GraficoEvolucaoPeso
-                  pesagens={pesagensResumo}
-                  pesoMedioInicial={
-                    lote.peso_total_entrada && lote.quantidade_total
-                      ? lote.peso_total_entrada / lote.quantidade_total
-                      : undefined
-                  }
-                  dataEntrada={lote.data_entrada}
-                />
-              </div>
-            )}
-
-            {/* Tabela de Pesagens */}
-            <div className="overflow-x-auto">
+          <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
@@ -560,7 +664,6 @@ export default function LoteDetalhesPage() {
                   })}
                 </tbody>
               </table>
-            </div>
           </div>
         )}
       </div>

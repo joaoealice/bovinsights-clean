@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import {
   getMarketIndicators,
+  getMarketIndicatorByRegion,
   getPriceHistory,
   MarketIndicator,
   formatPrice,
@@ -10,59 +12,65 @@ import {
   getTrendColor,
   getTrendIcon
 } from '@/lib/services/mercado.service'
+import { getPerfilFazenda, PRACAS_INDICADOR } from '@/lib/services/perfil.service'
 
 export default function IndicadoresMercadoCard() {
   const [indicators, setIndicators] = useState<MarketIndicator[]>([])
-  const [bahiaSulIndicator, setBahiaSulIndicator] = useState<MarketIndicator | null>(null)
-  const [bahiaOesteIndicator, setBahiaOesteIndicator] = useState<MarketIndicator | null>(null)
+  const [userIndicator, setUserIndicator] = useState<MarketIndicator | null>(null)
+  const [userPraca, setUserPraca] = useState<string | null>(null)
+  const [userPracaHasIndicator, setUserPracaHasIndicator] = useState<boolean>(false)
   const [otherIndicators, setOtherIndicators] = useState<MarketIndicator[]>([])
   const [history, setHistory] = useState<MarketIndicator[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [selectedRegion, setSelectedRegion] = useState<string>('BA Sul')
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [selectedRegion])
 
   const loadData = async () => {
     try {
       setLoading(true)
+
+      // Buscar praça preferida do usuário
+      const perfil = await getPerfilFazenda()
+      const pracaPreferida = perfil?.praca_preferida || null
+      setUserPraca(pracaPreferida)
+
+      // Verificar se a praça do usuário tem indicador disponível
+      const hasIndicator = pracaPreferida ? PRACAS_INDICADOR.includes(pracaPreferida) : false
+      setUserPracaHasIndicator(hasIndicator)
+
+      // Buscar todos os indicadores e histórico
       const [indicatorsData, historyData] = await Promise.all([
         getMarketIndicators(),
-        getPriceHistory(7)
+        getPriceHistory(7, pracaPreferida && hasIndicator ? pracaPreferida : selectedRegion)
       ])
       setIndicators(indicatorsData)
       setHistory(historyData)
 
-      // Separar Bahia Sul e Bahia Oeste dos outros indicadores
-      // Os dados vêm como state="BA" e region="BA Sul" ou "BA Oeste"
-      const bahiaSul = indicatorsData.find(i => {
-        const regionLower = i.region?.toLowerCase() || ''
-        const stateLower = i.state?.toLowerCase() || ''
-        return regionLower.includes('ba sul') ||
-               regionLower.includes('bahia sul') ||
-               (stateLower === 'ba' && regionLower.includes('sul'))
-      })
-      setBahiaSulIndicator(bahiaSul || null)
+      // Se o usuário tem praça configurada E ela tem indicador disponível
+      if (pracaPreferida && hasIndicator) {
+        const userIndicatorData = await getMarketIndicatorByRegion(pracaPreferida)
+        setUserIndicator(userIndicatorData)
 
-      const bahiaOeste = indicatorsData.find(i => {
-        const regionLower = i.region?.toLowerCase() || ''
-        const stateLower = i.state?.toLowerCase() || ''
-        return regionLower.includes('ba oeste') ||
-               regionLower.includes('bahia oeste') ||
-               (stateLower === 'ba' && regionLower.includes('oeste'))
-      })
-      setBahiaOesteIndicator(bahiaOeste || null)
+        // Outras praças (excluindo a praça do usuário)
+        const others = indicatorsData.filter(i => {
+          const regionLower = i.region?.toLowerCase() || ''
+          return !regionLower.includes(pracaPreferida.toLowerCase())
+        })
+        setOtherIndicators(others)
 
-      // Outros indicadores
-      const others = indicatorsData.filter(i => {
-        const regionLower = i.region?.toLowerCase() || ''
-        const stateLower = i.state?.toLowerCase() || ''
-        const isBahiaSul = regionLower.includes('ba sul') || regionLower.includes('bahia sul') || (stateLower === 'ba' && regionLower.includes('sul'))
-        const isBahiaOeste = regionLower.includes('ba oeste') || regionLower.includes('bahia oeste') || (stateLower === 'ba' && regionLower.includes('oeste'))
-        return !isBahiaSul && !isBahiaOeste
-      })
-      setOtherIndicators(others)
+        // Atualizar região selecionada para o modal
+        if (!selectedRegion || selectedRegion === 'BA Sul') {
+          setSelectedRegion(pracaPreferida)
+        }
+      } else {
+        // Comportamento padrão: mostrar todos os indicadores no ticker
+        setUserIndicator(null)
+        setOtherIndicators(indicatorsData)
+      }
     } catch (error) {
       console.error('Erro ao carregar indicadores:', error)
     } finally {
@@ -111,7 +119,8 @@ export default function IndicadoresMercadoCard() {
       <div className="card-leather p-6">
         <h3 className="font-display text-xl mb-4 flex items-center gap-2">
           <span className="text-2xl">📊</span>
-          INDICADORES DE MERCADO
+          INDICADORES
+          <span className="text-sm font-normal text-muted-foreground">(Tendencia de mercado)</span>
         </h3>
         <p className="text-muted-foreground text-center py-8">
           Nenhum indicador disponivel
@@ -123,64 +132,6 @@ export default function IndicadoresMercadoCard() {
   // Criar items do ticker duplicados para loop infinito
   const tickerItems = otherIndicators.length > 0 ? [...otherIndicators, ...otherIndicators] : []
 
-  // Componente de card de indicador
-  const IndicatorCard = ({ indicator, colorClass, borderClass }: {
-    indicator: MarketIndicator | null,
-    colorClass: string,
-    borderClass: string
-  }) => {
-    if (!indicator) {
-      return (
-        <div className={`bg-gradient-to-br ${colorClass} rounded-xl p-4 border-2 ${borderClass} shadow-lg`}>
-          <p className="text-sm text-muted-foreground text-center py-4">Sem dados</p>
-        </div>
-      )
-    }
-
-    const trendColor = getTrendColor(indicator.trend)
-    const trendIcon = getTrendIcon(indicator.trend)
-
-    return (
-      <div className={`bg-gradient-to-br ${colorClass} rounded-xl p-4 border-2 ${borderClass} shadow-lg`}>
-        <div className="text-center">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1">
-              <span className={`w-2 h-2 rounded-full ${borderClass.replace('border-', 'bg-').replace('/40', '')} animate-pulse`}></span>
-              <p className="text-xs font-bold uppercase">
-                {indicator.region || indicator.state}
-              </p>
-            </div>
-            <div className={`flex items-center gap-0.5 px-2 py-0.5 rounded-full ${
-              indicator.trend === 'up' ? 'bg-success/20' :
-              indicator.trend === 'down' ? 'bg-error/20' :
-              'bg-muted/30'
-            }`}>
-              <span className={`text-sm font-bold ${trendColor}`}>{trendIcon}</span>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Hoje</p>
-              <p className="font-display text-2xl font-bold">
-                {formatPrice(indicator.price_today)}
-              </p>
-            </div>
-            <div className="flex justify-between items-center text-xs border-t border-border/30 pt-1">
-              <div>
-                <span className="text-muted-foreground">Ontem: </span>
-                <span className="font-mono">{formatPrice(indicator.price_yesterday)}</span>
-              </div>
-              <span className={`font-mono font-bold ${trendColor}`}>
-                {formatDiff(indicator.diff)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   // Formatar data para o gráfico
   const formatDateShort = (dateString: string) => {
     if (!dateString) return ''
@@ -189,10 +140,11 @@ export default function IndicadoresMercadoCard() {
   }
 
   // Calcular variação percentual
+  // history está ordenado do mais antigo [0] para o mais recente [length-1]
   const calcVariacao = () => {
     if (history.length < 2) return 0
-    const primeiro = history[history.length - 1]?.price_today || 0
-    const ultimo = history[0]?.price_today || 0
+    const primeiro = history[0]?.price_today || 0
+    const ultimo = history[history.length - 1]?.price_today || 0
     if (primeiro === 0) return 0
     return ((ultimo - primeiro) / primeiro) * 100
   }
@@ -201,50 +153,115 @@ export default function IndicadoresMercadoCard() {
     <div className="card-leather p-6 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-display text-xl flex items-center gap-2">
-          <span className="text-2xl">📊</span>
-          INDICADORES
-        </h3>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-1 px-3 py-1.5 bg-primary/20 hover:bg-primary/30 text-primary rounded-full text-xs font-semibold transition-colors"
-          >
-            <span>📈</span>
-            <span>7 dias</span>
-          </button>
+          <h3 className="font-display text-xl flex items-center gap-2">
+            <span className="text-2xl">📊</span>
+            INDICADORES
+            <span className="text-sm font-normal text-muted-foreground">(Tendencia de mercado)</span>
+          </h3>
+          <div className="relative group">
+            <span className="cursor-help text-muted-foreground hover:text-foreground transition-colors">ℹ️</span>
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg text-xs text-popover-foreground w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+              Indicador de mercado calculado com base na media dos ultimos dias. Usado para analise de tendencia e apoio a decisao.
+              <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-border"></div>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {userPracaHasIndicator && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex items-center gap-1 px-3 py-1.5 bg-primary/20 hover:bg-primary/30 text-primary rounded-full text-xs font-semibold transition-colors"
+            >
+              <span>📈</span>
+              <span>7 dias</span>
+            </button>
+          )}
           <span className="text-xs text-muted-foreground">
-            {formatDate(bahiaSulIndicator?.reference_date || bahiaOesteIndicator?.reference_date || indicators[0]?.reference_date || '')}
+            {formatDate(userIndicator?.reference_date || indicators[0]?.reference_date || '')}
           </span>
         </div>
       </div>
 
-      {/* Bahia Sul e Bahia Oeste em destaque - FIXOS */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {/* Bahia Sul */}
-        <div className="relative">
-          <div className="absolute -top-2 left-3 px-2 py-0.5 bg-primary text-white text-[10px] font-bold rounded z-10">
-            BAHIA SUL
-          </div>
-          <IndicatorCard
-            indicator={bahiaSulIndicator}
-            colorClass="from-primary/25 to-primary/10"
-            borderClass="border-primary/40"
-          />
+      {/* Indicador do usuário em destaque */}
+      {userPraca ? (
+        <div className="mb-4">
+          {userPracaHasIndicator ? (
+            userIndicator ? (
+              <div className="bg-gradient-to-br from-primary/25 to-primary/10 rounded-xl p-4 border-2 border-primary/40 shadow-lg">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                    <p className="text-sm font-bold text-primary uppercase">{userPraca}</p>
+                    <span className="ml-2 text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full">SUA PRACA</span>
+                    <div className={`ml-2 flex items-center gap-0.5 px-2 py-0.5 rounded-full ${
+                      userIndicator.trend === 'up' ? 'bg-success/20' :
+                      userIndicator.trend === 'down' ? 'bg-error/20' :
+                      'bg-muted/30'
+                    }`}>
+                      <span className={`text-sm font-bold ${getTrendColor(userIndicator.trend)}`}>
+                        {getTrendIcon(userIndicator.trend)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 mt-3">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Hoje</p>
+                      <p className="font-display text-2xl text-primary font-bold">
+                        {formatPrice(userIndicator.price_today)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Ontem</p>
+                      <p className="font-display text-xl text-foreground">
+                        {formatPrice(userIndicator.price_yesterday)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Variacao</p>
+                      <p className={`font-display text-xl font-bold ${getTrendColor(userIndicator.trend)}`}>
+                        {formatDiff(userIndicator.diff)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 text-center">
+                <p className="text-sm text-warning-foreground">
+                  <span className="font-semibold">Sem indicador para {userPraca}</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Indicador do dia ainda nao disponivel para sua praca.
+                </p>
+              </div>
+            )
+          ) : (
+            <div className="bg-muted/20 border border-border rounded-xl p-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold">Indicadores nao disponiveis para {userPraca}</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Sua praca ainda nao possui dados de indicadores de mercado.
+                <br />
+                <Link href="/dashboard/configuracoes" className="text-primary hover:underline">
+                  Contate o suporte
+                </Link> para solicitar a adicao.
+              </p>
+            </div>
+          )}
         </div>
-
-        {/* Bahia Oeste */}
-        <div className="relative">
-          <div className="absolute -top-2 left-3 px-2 py-0.5 bg-accent text-white text-[10px] font-bold rounded z-10">
-            BAHIA OESTE
-          </div>
-          <IndicatorCard
-            indicator={bahiaOesteIndicator}
-            colorClass="from-accent/25 to-accent/10"
-            borderClass="border-accent/40"
-          />
+      ) : (
+        <div className="mb-4 bg-muted/20 border border-border rounded-xl p-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold">Configure sua praca preferida</span>
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Acesse as <Link href="/dashboard/configuracoes" className="text-primary hover:underline">configuracoes</Link> para
+            selecionar sua praca e ver indicadores personalizados.
+          </p>
         </div>
-      </div>
+      )}
 
       {/* Ticker horizontal de outros indicadores */}
       {otherIndicators.length > 0 && (
@@ -349,7 +366,7 @@ export default function IndicadoresMercadoCard() {
             <div className="flex items-center justify-between p-4 border-b border-border">
               <div>
                 <h3 className="font-display text-2xl">HISTORICO 7 DIAS</h3>
-                <p className="text-sm text-muted-foreground">Movimentacao da arroba - BA Sul</p>
+                <p className="text-sm text-muted-foreground">Movimentacao da arroba - {selectedRegion}</p>
               </div>
               <button
                 onClick={() => setShowModal(false)}
@@ -359,20 +376,53 @@ export default function IndicadoresMercadoCard() {
               </button>
             </div>
 
+            {/* Seletor de Praça */}
+            <div className="px-4 pt-4">
+              <div className="flex flex-wrap gap-2">
+                {PRACAS_INDICADOR.map((region) => (
+                  <button
+                    key={region}
+                    onClick={() => setSelectedRegion(region)}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                      selectedRegion === region
+                        ? 'bg-primary text-white'
+                        : 'bg-muted/30 hover:bg-muted/50'
+                    }`}
+                  >
+                    {region}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Conteúdo */}
             <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
+              {/* Mensagem quando não há dados */}
+              {history.length === 0 && (
+                <div className="text-center py-8">
+                  <span className="text-4xl mb-2 block">📉</span>
+                  <p className="text-muted-foreground">
+                    Nenhum historico disponivel para {selectedRegion}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Os dados serao exibidos conforme forem atualizados
+                  </p>
+                </div>
+              )}
+
               {/* Resumo */}
+              {history.length > 0 && (
               <div className="grid grid-cols-3 gap-3">
                 <div className="bg-muted/30 rounded-xl p-3 text-center">
                   <p className="text-xs text-muted-foreground mb-1">Inicio (7d)</p>
                   <p className="font-display text-xl">
-                    {formatPrice(history[history.length - 1]?.price_today || 0)}
+                    {formatPrice(history[0]?.price_today || 0)}
                   </p>
                 </div>
                 <div className="bg-muted/30 rounded-xl p-3 text-center">
                   <p className="text-xs text-muted-foreground mb-1">Hoje</p>
                   <p className="font-display text-xl text-primary">
-                    {formatPrice(history[0]?.price_today || 0)}
+                    {formatPrice(history[history.length - 1]?.price_today || 0)}
                   </p>
                 </div>
                 <div className={`rounded-xl p-3 text-center ${calcVariacao() >= 0 ? 'bg-success/20' : 'bg-error/20'}`}>
@@ -382,9 +432,10 @@ export default function IndicadoresMercadoCard() {
                   </p>
                 </div>
               </div>
+              )}
 
               {/* Gráfico de Linhas SVG */}
-              {chartData.length > 1 && (
+              {history.length > 0 && chartData.length > 1 && (
                 <div className="bg-muted/20 rounded-xl p-4">
                   <svg viewBox="0 0 300 120" className="w-full h-32">
                     {/* Grid lines */}
@@ -443,21 +494,22 @@ export default function IndicadoresMercadoCard() {
               )}
 
               {/* Lista detalhada */}
+              {history.length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-muted-foreground">Detalhamento diario</p>
                 {[...history].reverse().map((item, index) => {
-                  const isLast = index === history.length - 1
+                  const isToday = index === 0 // Primeiro item é o mais recente (hoje)
                   const trendColor = getTrendColor(item.trend)
                   return (
                     <div
                       key={index}
-                      className={`flex items-center justify-between p-3 rounded-lg ${isLast ? 'bg-primary/20 border border-primary/30' : 'bg-muted/20'}`}
+                      className={`flex items-center justify-between p-3 rounded-lg ${isToday ? 'bg-primary/20 border border-primary/30' : 'bg-muted/20'}`}
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-sm text-muted-foreground w-12">
                           {formatDateShort(item.reference_date)}
                         </span>
-                        <span className={`font-display text-lg ${isLast ? 'text-primary' : ''}`}>
+                        <span className={`font-display text-lg ${isToday ? 'text-primary' : ''}`}>
                           {formatPrice(item.price_today)}
                         </span>
                       </div>
@@ -469,6 +521,7 @@ export default function IndicadoresMercadoCard() {
                   )
                 })}
               </div>
+              )}
             </div>
           </div>
         </>

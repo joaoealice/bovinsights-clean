@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getMarketPrices, MarketPrice, formatPrice } from '@/lib/services/mercado.service'
+import Link from 'next/link'
+import { getMarketPrices, getMarketPriceByRegion, MarketPrice, formatPrice } from '@/lib/services/mercado.service'
+import { getPerfilFazenda } from '@/lib/services/perfil.service'
 
 export default function CotacaoBoiCard() {
   const [prices, setPrices] = useState<MarketPrice[]>([])
-  const [bahiaSul, setBahiaSul] = useState<MarketPrice | null>(null)
-  const [bahiaOeste, setBahiaOeste] = useState<MarketPrice | null>(null)
+  const [userPrice, setUserPrice] = useState<MarketPrice | null>(null)
+  const [userPraca, setUserPraca] = useState<string | null>(null)
   const [otherPrices, setOtherPrices] = useState<MarketPrice[]>([])
   const [loading, setLoading] = useState(true)
   const [tickerPosition, setTickerPosition] = useState(0)
@@ -29,38 +31,32 @@ export default function CotacaoBoiCard() {
   const loadPrices = async () => {
     try {
       setLoading(true)
+
+      // Buscar praça preferida do usuário
+      const perfil = await getPerfilFazenda()
+      const pracaPreferida = perfil?.praca_preferida || null
+      setUserPraca(pracaPreferida)
+
+      // Buscar todos os preços
       const data = await getMarketPrices()
       setPrices(data)
 
-      // Separar Bahia Sul e Bahia Oeste como praças fixas
-      // Os dados vêm como state="BA" e region="BA Sul" ou "BA Oeste"
-      const bahiaSulData = data.find(p => {
-        const regionLower = p.region?.toLowerCase() || ''
-        const stateLower = p.state?.toLowerCase() || ''
-        return regionLower.includes('ba sul') ||
-               regionLower.includes('bahia sul') ||
-               (stateLower === 'ba' && regionLower.includes('sul'))
-      })
-      setBahiaSul(bahiaSulData || null)
+      // Se o usuário tem praça configurada, buscar preço específico
+      if (pracaPreferida) {
+        const userPriceData = await getMarketPriceByRegion(pracaPreferida)
+        setUserPrice(userPriceData)
 
-      const bahiaOesteData = data.find(p => {
-        const regionLower = p.region?.toLowerCase() || ''
-        const stateLower = p.state?.toLowerCase() || ''
-        return regionLower.includes('ba oeste') ||
-               regionLower.includes('bahia oeste') ||
-               (stateLower === 'ba' && regionLower.includes('oeste'))
-      })
-      setBahiaOeste(bahiaOesteData || null)
-
-      // Outras praças (excluindo Bahia Sul e Bahia Oeste)
-      const others = data.filter(p => {
-        const regionLower = p.region?.toLowerCase() || ''
-        const stateLower = p.state?.toLowerCase() || ''
-        const isBahiaSul = regionLower.includes('ba sul') || regionLower.includes('bahia sul') || (stateLower === 'ba' && regionLower.includes('sul'))
-        const isBahiaOeste = regionLower.includes('ba oeste') || regionLower.includes('bahia oeste') || (stateLower === 'ba' && regionLower.includes('oeste'))
-        return !isBahiaSul && !isBahiaOeste
-      })
-      setOtherPrices(others)
+        // Outras praças (excluindo a praça do usuário)
+        const others = data.filter(p => {
+          const regionLower = p.region?.toLowerCase() || ''
+          return !regionLower.includes(pracaPreferida.toLowerCase())
+        })
+        setOtherPrices(others)
+      } else {
+        // Comportamento padrão: mostrar todas as praças no ticker
+        setUserPrice(null)
+        setOtherPrices(data)
+      }
     } catch (error) {
       console.error('Erro ao carregar cotações:', error)
     } finally {
@@ -94,6 +90,7 @@ export default function CotacaoBoiCard() {
         <h3 className="font-display text-xl mb-4 flex items-center gap-2">
           <span className="text-2xl">🐂</span>
           COTACAO @ BOI GORDO
+          <span className="text-sm font-normal text-muted-foreground">(Preco do dia)</span>
         </h3>
         <p className="text-muted-foreground text-center py-8">
           Nenhuma cotacao disponivel
@@ -109,75 +106,80 @@ export default function CotacaoBoiCard() {
     <div className="card-leather p-6 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-display text-xl flex items-center gap-2">
-          <span className="text-2xl">🐂</span>
-          COTACAO @ BOI GORDO
-        </h3>
-        {(bahiaSul || bahiaOeste) && (
+        <div className="flex items-center gap-2">
+          <h3 className="font-display text-xl flex items-center gap-2">
+            <span className="text-2xl">🐂</span>
+            COTACAO @ BOI GORDO
+            <span className="text-sm font-normal text-muted-foreground">(Preco do dia)</span>
+          </h3>
+          <div className="relative group">
+            <span className="cursor-help text-muted-foreground hover:text-foreground transition-colors">ℹ️</span>
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg text-xs text-popover-foreground w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+              Preco praticado hoje no mercado fisico. Usado para decisoes imediatas de venda e calculo do valor do estoque.
+              <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-border"></div>
+            </div>
+          </div>
+        </div>
+        {(userPrice || prices.length > 0) && (
           <span className="text-xs text-muted-foreground">
-            {formatDate(bahiaSul?.reference_date || bahiaOeste?.reference_date || '')}
+            {formatDate(userPrice?.reference_date || prices[0]?.reference_date || '')}
           </span>
         )}
       </div>
 
-      {/* Bahia Sul e Bahia Oeste em destaque - FIXOS */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {/* Bahia Sul */}
-        <div className="bg-gradient-to-br from-primary/25 to-primary/10 rounded-xl p-4 border-2 border-primary/40 shadow-lg">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 mb-2">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-              <p className="text-sm font-bold text-primary">BAHIA SUL</p>
-            </div>
-            {bahiaSul ? (
-              <div className="space-y-2">
-                <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">A Vista</p>
-                  <p className="font-display text-2xl text-primary font-bold">
-                    {formatPrice(bahiaSul.price_cash)}
-                  </p>
+      {/* Praça do usuário em destaque */}
+      {userPraca ? (
+        <div className="mb-4">
+          {userPrice ? (
+            <div className="bg-gradient-to-br from-primary/25 to-primary/10 rounded-xl p-4 border-2 border-primary/40 shadow-lg">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-2">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                  <p className="text-sm font-bold text-primary uppercase">{userPraca}</p>
+                  <span className="ml-2 text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full">SUA PRACA</span>
                 </div>
-                <div className="border-t border-primary/20 pt-2">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">A Prazo</p>
-                  <p className="font-display text-xl text-foreground">
-                    {formatPrice(bahiaSul.price_term)}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground py-4">Sem dados</p>
-            )}
-          </div>
-        </div>
-
-        {/* Bahia Oeste */}
-        <div className="bg-gradient-to-br from-accent/25 to-accent/10 rounded-xl p-4 border-2 border-accent/40 shadow-lg">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 mb-2">
-              <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
-              <p className="text-sm font-bold text-accent">BAHIA OESTE</p>
-            </div>
-            {bahiaOeste ? (
-              <div className="space-y-2">
-                <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">A Vista</p>
-                  <p className="font-display text-2xl text-accent font-bold">
-                    {formatPrice(bahiaOeste.price_cash)}
-                  </p>
-                </div>
-                <div className="border-t border-accent/20 pt-2">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">A Prazo</p>
-                  <p className="font-display text-xl text-foreground">
-                    {formatPrice(bahiaOeste.price_term)}
-                  </p>
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">A Vista</p>
+                    <p className="font-display text-3xl text-primary font-bold">
+                      {formatPrice(userPrice.price_cash)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">A Prazo</p>
+                    <p className="font-display text-3xl text-foreground">
+                      {formatPrice(userPrice.price_term)}
+                    </p>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground py-4">Sem dados</p>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 text-center">
+              <p className="text-sm text-warning-foreground">
+                <span className="font-semibold">Sem dados para {userPraca}</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Cotacao do dia ainda nao disponivel para sua praca.
+                <br />
+                <Link href="/dashboard/configuracoes" className="text-primary hover:underline">
+                  Contate o suporte
+                </Link> para mais informacoes.
+              </p>
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        <div className="mb-4 bg-muted/20 border border-border rounded-xl p-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold">Configure sua praca preferida</span>
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Acesse as <Link href="/dashboard/configuracoes" className="text-primary hover:underline">configuracoes</Link> para
+            selecionar sua praca e ver cotacoes personalizadas.
+          </p>
+        </div>
+      )}
 
       {/* Ticker horizontal de outras praças */}
       {otherPrices.length > 0 && (

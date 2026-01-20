@@ -14,6 +14,8 @@ import {
   formatarTelefone,
   formatarCEP,
   ESTADOS_BR,
+  PRACAS_COTACAO,
+  PRACAS_INDICADOR,
   type PerfilCompleto
 } from '@/lib/services/perfil.service'
 import ThemeSelector from '@/components/ui/ThemeSelector'
@@ -44,6 +46,7 @@ export default function ConfiguracoesPage() {
     estado: '',
     cep: '',
     area_total_hectares: '',
+    praca_preferida: '',
   })
 
   useEffect(() => {
@@ -73,6 +76,7 @@ export default function ConfiguracoesPage() {
           estado: data.fazenda.estado || '',
           cep: data.fazenda.cep || '',
           area_total_hectares: data.fazenda.area_total_hectares?.toString() || '',
+          praca_preferida: data.fazenda.praca_preferida || '',
         })
       }
     } catch (error) {
@@ -134,6 +138,7 @@ export default function ConfiguracoesPage() {
         estado: dadosFazenda.estado || '',
         cep: dadosFazenda.cep || null,
         area_total_hectares: dadosFazenda.area_total_hectares ? parseFloat(dadosFazenda.area_total_hectares) : null,
+        praca_preferida: dadosFazenda.praca_preferida || null,
       })
 
       toast.success('Perfil atualizado com sucesso!')
@@ -494,10 +499,72 @@ export default function ConfiguracoesPage() {
           </div>
         </div>
 
+        {/* Praca de Mercado */}
+        <div className="card-leather p-6">
+          <h2 className="font-display text-2xl text-foreground mb-6 flex items-center gap-2">
+            <span className="text-3xl">4</span>
+            Praca de Mercado
+          </h2>
+          <p className="text-muted-foreground text-sm mb-6">
+            Selecione sua praca preferida para exibicao de cotacoes e calculo do valor do estoque.
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-foreground">
+                Praca Preferida
+              </label>
+              <select
+                name="praca_preferida"
+                value={dadosFazenda.praca_preferida}
+                onChange={handleChangeFazenda}
+                className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+              >
+                <option value="">Selecione sua praca</option>
+                {PRACAS_COTACAO.map(praca => (
+                  <option key={praca} value={praca}>
+                    {praca} {PRACAS_INDICADOR.includes(praca) ? '(com indicador)' : ''}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-2">
+                Pracas marcadas com "(com indicador)" possuem dados de tendencia de mercado disponiveis.
+              </p>
+            </div>
+
+            {dadosFazenda.praca_preferida && !PRACAS_INDICADOR.includes(dadosFazenda.praca_preferida) && (
+              <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
+                <p className="text-sm text-warning-foreground">
+                  <span className="font-semibold">Nota:</span> A praca selecionada nao possui indicadores de mercado disponiveis.
+                  Os indicadores serao exibidos apenas quando houver dados para sua regiao.
+                </p>
+              </div>
+            )}
+
+            <div className="bg-muted/20 rounded-lg p-4 border border-border">
+              <p className="text-sm text-muted-foreground mb-2">
+                <span className="font-semibold">Sua praca nao esta na lista?</span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Entre em contato com o suporte para solicitar a adicao de sua praca.
+              </p>
+              <a
+                href="https://wa.me/5577999999999?text=Olá! Gostaria de solicitar a adição de uma nova praça de mercado no BovInsights."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-success/20 hover:bg-success/30 text-success rounded-lg text-sm font-semibold transition-colors"
+              >
+                <span>💬</span>
+                Contatar suporte via WhatsApp
+              </a>
+            </div>
+          </div>
+        </div>
+
         {/* Aparencia */}
         <div className="bg-card border border-border rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span className="text-2xl">4</span>
+            <span className="text-2xl">5</span>
             Aparencia
           </h2>
           <p className="text-sm text-muted-foreground mb-4">

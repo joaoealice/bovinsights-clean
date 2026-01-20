@@ -52,11 +52,14 @@ export async function getMarketPrices(date?: string): Promise<MarketPrice[]> {
   const { data, error } = await query
 
   if (error) {
-    console.error('Erro ao buscar cotações:', error)
+    // Ignora erro de tabela vazia ou sem dados (PGRST116 = no rows returned)
+    if (error.code !== 'PGRST116') {
+      console.error('Erro ao buscar cotações:', error)
+    }
     return []
   }
 
-  return data as MarketPrice[]
+  return (data || []) as MarketPrice[]
 }
 
 // Buscar indicadores do mercado (market_indicators)
@@ -114,22 +117,150 @@ export async function getBahiaPrice(): Promise<MarketPrice | null> {
   return data as MarketPrice
 }
 
-// Buscar histórico de preços para gráfico
-export async function getPriceHistory(days: number = 7): Promise<MarketIndicator[]> {
+// Buscar cotação por região específica
+export async function getMarketPriceByRegion(region: string): Promise<MarketPrice | null> {
   const supabase = createClient()
+
+  // Buscar a data mais recente primeiro
+  const { data: latest } = await supabase
+    .from('market_prices')
+    .select('reference_date')
+    .order('reference_date', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (!latest) return null
+
+  const { data, error } = await supabase
+    .from('market_prices')
+    .select('*')
+    .ilike('region', `%${region}%`)
+    .eq('reference_date', latest.reference_date)
+    .limit(1)
+    .single()
+
+  if (error) {
+    // Tentar busca mais recente disponível para essa região
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('market_prices')
+      .select('*')
+      .ilike('region', `%${region}%`)
+      .order('reference_date', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (fallbackError) {
+      console.error('Erro ao buscar cotação por região:', fallbackError)
+      return null
+    }
+
+    return fallbackData as MarketPrice
+  }
+
+  return data as MarketPrice
+}
+
+// Buscar indicador por região específica
+export async function getMarketIndicatorByRegion(region: string): Promise<MarketIndicator | null> {
+  const supabase = createClient()
+
+  // Buscar a data mais recente primeiro
+  const { data: latest } = await supabase
+    .from('market_indicators')
+    .select('reference_date')
+    .order('reference_date', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (!latest) return null
 
   const { data, error } = await supabase
     .from('market_indicators')
     .select('*')
-    .order('reference_date', { ascending: true })
-    .limit(days)
+    .ilike('region', `%${region}%`)
+    .eq('reference_date', latest.reference_date)
+    .limit(1)
+    .single()
+
+  if (error) {
+    // Tentar busca mais recente disponível para essa região
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('market_indicators')
+      .select('*')
+      .ilike('region', `%${region}%`)
+      .order('reference_date', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (fallbackError) {
+      console.error('Erro ao buscar indicador por região:', fallbackError)
+      return null
+    }
+
+    return fallbackData as MarketIndicator
+  }
+
+  return data as MarketIndicator
+}
+
+// Verificar se região está disponível em determinada tabela
+export async function checkRegionAvailable(
+  region: string,
+  table: 'prices' | 'indicators'
+): Promise<boolean> {
+  const supabase = createClient()
+  const tableName = table === 'prices' ? 'market_prices' : 'market_indicators'
+
+  const { data, error } = await supabase
+    .from(tableName)
+    .select('id')
+    .ilike('region', `%${region}%`)
+    .limit(1)
+
+  if (error) {
+    console.error(`Erro ao verificar região em ${tableName}:`, error)
+    return false
+  }
+
+  return data && data.length > 0
+}
+
+// Buscar histórico de preços para gráfico
+export async function getPriceHistory(
+  days: number = 7,
+  region?: string,
+  state?: string
+): Promise<MarketIndicator[]> {
+  const supabase = createClient()
+
+  // Buscar as datas mais recentes disponíveis
+  let query = supabase
+    .from('market_indicators')
+    .select('*')
+    .order('reference_date', { ascending: false })
+
+  // Filtrar por região se especificado
+  if (region) {
+    query = query.ilike('region', `%${region}%`)
+  }
+
+  // Filtrar por estado se especificado
+  if (state) {
+    query = query.eq('state', state)
+  }
+
+  // Limitar aos últimos N dias
+  query = query.limit(days)
+
+  const { data, error } = await query
 
   if (error) {
     console.error('Erro ao buscar histórico:', error)
     return []
   }
 
-  return data as MarketIndicator[]
+  // Retornar em ordem crescente (do mais antigo para o mais recente)
+  return (data as MarketIndicator[]).reverse()
 }
 
 // Formatar preço em reais

@@ -24,6 +24,7 @@ export interface PerfilUsuario {
   onboarding_completed: boolean | null
   quick_tour_completed: boolean | null
   quick_tour_skipped: boolean | null
+  praca_preferida: string | null
   created_at: string
   updated_at: string
 }
@@ -60,6 +61,7 @@ export interface PerfilFazendaInput {
   area_total_hectares?: number | null
   inscricao_estadual?: string | null
   observacoes?: string | null
+  praca_preferida?: string | null
 }
 
 export interface DadosUsuarioInput {
@@ -98,6 +100,32 @@ export const ESTADOS_BR = [
   { sigla: 'SP', nome: 'São Paulo' },
   { sigla: 'SE', nome: 'Sergipe' },
   { sigla: 'TO', nome: 'Tocantins' },
+]
+
+// Pracas disponiveis para cotacao (market_prices)
+export const PRACAS_COTACAO = [
+  'MT sudoeste',
+  'RO sudeste',
+  'MG Triangulo',
+  'MA Oeste',
+  'MG Norte',
+  'MT Norte',
+  'ES',
+  'SP Barretos',
+  'MS Dourados',
+  'TO Norte',
+  'GO Reg. Sul',
+  'BA Sul',
+  'BA Oeste'
+]
+
+// Pracas disponiveis para indicadores (market_indicators)
+export const PRACAS_INDICADOR = [
+  'MG Norte',
+  'TO Sul',
+  'BA Oeste',
+  'BA Sul',
+  'GO Goiania'
 ]
 
 // Buscar dados do usuário autenticado
@@ -191,6 +219,7 @@ export async function criarPerfilFazenda(dados: PerfilFazendaInput): Promise<Per
       area_total_hectares: dados.area_total_hectares || null,
       inscricao_estadual: dados.inscricao_estadual || null,
       observacoes: dados.observacoes || null,
+      praca_preferida: dados.praca_preferida || null,
     })
     .select()
     .single()
@@ -232,6 +261,7 @@ export async function atualizarPerfilFazenda(dados: PerfilFazendaInput): Promise
       area_total_hectares: dados.area_total_hectares,
       inscricao_estadual: dados.inscricao_estadual,
       observacoes: dados.observacoes,
+      praca_preferida: dados.praca_preferida,
     })
     .eq('usuario_id', user.id)
     .select()
