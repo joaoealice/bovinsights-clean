@@ -70,7 +70,7 @@ export default function CotacaoBoiCard() {
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: '2-digit'
     })
   }
 
@@ -105,27 +105,24 @@ export default function CotacaoBoiCard() {
   return (
     <div className="card-leather p-6 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <h3 className="font-display text-xl flex items-center gap-2">
-            <span className="text-2xl">🐂</span>
-            COTACAO @ BOI GORDO
-            <span className="text-sm font-normal text-muted-foreground">(Preco do dia)</span>
-          </h3>
-          <div className="relative group">
-            <span className="cursor-help text-muted-foreground hover:text-foreground transition-colors">ℹ️</span>
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg text-xs text-popover-foreground w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-              Preco praticado hoje no mercado fisico. Usado para decisoes imediatas de venda e calculo do valor do estoque.
-              <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-border"></div>
-            </div>
-          </div>
-        </div>
-        {(userPrice || prices.length > 0) && (
-          <span className="text-xs text-muted-foreground">
-            {formatDate(userPrice?.reference_date || prices[0]?.reference_date || '')}
-          </span>
-        )}
-      </div>
+      {/* Header */}
+{/* Header */}
+<div className="mb-4 space-y-1">
+  <h3 className="font-display text-lg flex items-center gap-2">
+    <span className="text-xl">🐂</span>
+    COTACAO @ BOI GORDO
+  </h3>
+
+  <p className="text-xs text-muted-foreground">
+    Preço do dia
+    {(userPrice || prices.length > 0) && (
+      <span className="ml-2">
+        • {formatDate(userPrice?.reference_date || prices[0]?.reference_date || '')}
+      </span>
+    )}
+  </p>
+</div>
+
 
       {/* Praça do usuário em destaque */}
       {userPraca ? (
@@ -141,15 +138,18 @@ export default function CotacaoBoiCard() {
                 <div className="grid grid-cols-2 gap-4 mt-3">
                   <div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider">A Vista</p>
-                    <p className="font-display text-3xl text-primary font-bold">
-                      {formatPrice(userPrice.price_cash)}
-                    </p>
+                    <p className="font-display text-3xl text-primary font-bold flex items-baseline gap-1">
+  <span className="text-xs text-muted-foreground">R$</span>
+  <span>{userPrice.price_cash.toFixed(2)}</span>
+</p>
+
                   </div>
                   <div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider">A Prazo</p>
-                    <p className="font-display text-3xl text-foreground">
-                      {formatPrice(userPrice.price_term)}
-                    </p>
+                    <p className="font-display text-3xl text-foreground flex items-baseline gap-1">
+  <span className="text-xs text-muted-foreground">R$</span>
+  <span>{userPrice.price_term.toFixed(2)}</span>
+</p>
                   </div>
                 </div>
               </div>

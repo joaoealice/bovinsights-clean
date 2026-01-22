@@ -13,6 +13,10 @@ import { getPerfilCompleto, getPerfilFazenda, criarPerfilFazenda, marcarOnboardi
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
+// Logos para cada tema
+const LOGO_LIGHT = 'https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/logo_bovi_traco_black.svg'
+const LOGO_DARK = 'https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo%20(1).svg'
+
 interface DashboardLayoutClientProps {
   children: React.ReactNode
   initialUserName: string
@@ -104,21 +108,18 @@ export default function DashboardLayoutClient({
         // Se o perfil não existe, tenta criar
         if (!perfil) {
           if (retries > 0) {
-            console.log(`Profile not found, retrying... (${retries} retries left)`);
             await new Promise(resolve => setTimeout(resolve, 1000));
             return checkOnboarding(retries - 1);
           }
 
           // Após retries, cria o perfil manualmente
-          console.log("Creating profile manually...");
           try {
             perfil = await criarPerfilFazenda({
               cidade: 'A definir',
               estado: 'SP'
             });
-          } catch (createError) {
-            console.error("Failed to create profile:", createError);
-            // Mesmo sem perfil, mostra a welcome page
+          } catch {
+            // Mesmo sem perfil, mostra a welcome page para o usuário configurar
             setShowWelcomePage(true);
             return;
           }
@@ -131,8 +132,7 @@ export default function DashboardLayoutClient({
           // Tour não completado nem pulado - pode iniciar automaticamente se desejar
           // setShowQuickTour(true);
         }
-      } catch (error) {
-        console.error("Failed to check onboarding status:", error);
+      } catch {
         // Em caso de erro, mostra a welcome page para não bloquear o usuário
         setShowWelcomePage(true);
       }
@@ -142,43 +142,43 @@ export default function DashboardLayoutClient({
   }, []);
 
   const handleStartTour = () => {
-    console.log("[Dashboard] handleStartTour called");
-
     // Fecha o WelcomePage primeiro
     setShowWelcomePage(false);
 
     // Abre o QuickTour após um delay
     setTimeout(() => {
-      console.log("[Dashboard] Setting showQuickTour to TRUE");
       setShowQuickTour(true);
     }, 500);
 
     // Marca o onboarding como concluído em background (não bloqueia)
-    marcarOnboardingConcluido().catch(error => {
-      console.error("[Dashboard] Failed to mark onboarding as completed:", error);
-    });
+    marcarOnboardingConcluido().catch(() => {});
   };
-
-  // Debug: log state changes
-  useEffect(() => {
-    console.log("[Dashboard] showQuickTour changed to:", showQuickTour);
-  }, [showQuickTour]);
 
   const handleSkipWelcome = async () => {
     setShowWelcomePage(false);
-     try {
-        await marcarOnboardingConcluido(); // Still mark welcome as done
-    } catch (error) {
-        console.error("Failed to mark onboarding as completed:", error);
+    try {
+      await marcarOnboardingConcluido();
+    } catch {
+      // Silently ignore - user can still use the app
     }
+  }
+
+  const handleConfigureNow = async () => {
+    setShowWelcomePage(false);
+    try {
+      await marcarOnboardingConcluido();
+    } catch {
+      // Silently ignore - navigation will still work
+    }
+    router.push('/dashboard/configuracoes?section=fazenda');
   }
 
   const handleFinishTour = async () => {
     setShowQuickTour(false);
     try {
-        await marcarQuickTourConcluido();
-    } catch (error) {
-        console.error("Failed to mark tour as completed:", error);
+      await marcarQuickTourConcluido();
+    } catch {
+      // Silently ignore
     }
   };
 
@@ -186,8 +186,8 @@ export default function DashboardLayoutClient({
     setShowQuickTour(false);
     try {
       await marcarQuickTourPulado();
-    } catch (error) {
-      console.error("Failed to mark tour as skipped:", error);
+    } catch {
+      // Silently ignore
     }
   };
 
@@ -265,6 +265,16 @@ export default function DashboardLayoutClient({
     }
   }
 
+  const getLogo = () => {
+    if (theme === 'light') return LOGO_LIGHT
+    if (theme === 'dark') return LOGO_DARK
+    // Para 'system', verifica a preferência do sistema
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return LOGO_DARK
+    }
+    return LOGO_LIGHT
+  }
+
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -319,6 +329,7 @@ export default function DashboardLayoutClient({
         <WelcomePage
           onStartTour={handleStartTour}
           onSkip={handleSkipWelcome}
+          onConfigureNow={handleConfigureNow}
         />
       )}
        {showQuickTour && (
@@ -338,7 +349,7 @@ export default function DashboardLayoutClient({
         <div className="flex items-center justify-between px-3 py-2">
           <Link href="/dashboard" className="flex items-center flex-1">
             <Image
-              src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo%20(1).svg"
+              src={getLogo()}
               alt="Bovinsights"
               width={180}
               height={45}
@@ -372,7 +383,7 @@ export default function DashboardLayoutClient({
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3">
             <Image
-              src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo%20(1).svg"
+              src={getLogo()}
               alt="Bovinsights"
               width={200}
               height={50}
@@ -482,7 +493,7 @@ export default function DashboardLayoutClient({
           <div className="flex items-center justify-between px-8 py-4">
             <div className="flex items-center gap-6">
               <Image
-                src="https://vwlawfsvfnibduovqtjh.supabase.co/storage/v1/object/public/imagens/Bovinsights%20-%20Logo%20(1).svg"
+                src={getLogo()}
                 alt="Bovinsights"
                 width={140}
                 height={35}

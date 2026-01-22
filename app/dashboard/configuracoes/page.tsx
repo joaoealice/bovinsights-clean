@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import {
@@ -22,11 +22,15 @@ import ThemeSelector from '@/components/ui/ThemeSelector'
 
 export default function ConfiguracoesPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const fazendaSectionRef = useRef<HTMLDivElement>(null)
+  const pracaSectionRef = useRef<HTMLDivElement>(null)
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [highlightSections, setHighlightSections] = useState(false)
 
   const [perfil, setPerfil] = useState<PerfilCompleto | null>(null)
 
@@ -52,6 +56,28 @@ export default function ConfiguracoesPage() {
   useEffect(() => {
     loadPerfil()
   }, [])
+
+  // Scroll automático para a seção quando vem do onboarding
+  useEffect(() => {
+    const section = searchParams.get('section')
+    if (section === 'fazenda' && !loading) {
+      // Ativa o destaque visual nas seções importantes
+      setHighlightSections(true)
+
+      // Pequeno delay para garantir que o DOM está renderizado
+      setTimeout(() => {
+        fazendaSectionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        })
+      }, 300)
+
+      // Remove o destaque após alguns segundos
+      setTimeout(() => {
+        setHighlightSections(false)
+      }, 5000)
+    }
+  }, [searchParams, loading])
 
   const loadPerfil = async () => {
     try {
@@ -395,13 +421,14 @@ export default function ConfiguracoesPage() {
         </div>
 
         {/* Dados da Fazenda */}
-        <div className="card-leather p-6">
+        <div ref={fazendaSectionRef} className={`card-leather p-6 scroll-mt-24 transition-all duration-500 ${highlightSections ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-background' : ''}`}>
           <h2 className="font-display text-2xl text-foreground mb-6 flex items-center gap-2">
             <span className="text-3xl">3</span>
             Dados da Fazenda
+            {highlightSections && <span className="ml-2 text-sm bg-amber-500 text-white px-2 py-1 rounded-full animate-pulse">Configure aqui</span>}
           </h2>
           <p className="text-muted-foreground text-sm mb-6">
-            Essas informações serão utilizadas para zoneamento climático e relatórios.
+            Informe a <strong>cidade e estado</strong> da fazenda para monitoramento do clima na sua região.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -499,14 +526,15 @@ export default function ConfiguracoesPage() {
           </div>
         </div>
 
-        {/* Praca de Mercado */}
-        <div className="card-leather p-6">
+        {/* Praça de Mercado */}
+        <div ref={pracaSectionRef} className={`card-leather p-6 scroll-mt-24 transition-all duration-500 ${highlightSections ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-background' : ''}`}>
           <h2 className="font-display text-2xl text-foreground mb-6 flex items-center gap-2">
             <span className="text-3xl">4</span>
-            Praca de Mercado
+            Praça de Mercado
+            {highlightSections && <span className="ml-2 text-sm bg-amber-500 text-white px-2 py-1 rounded-full animate-pulse">Configure aqui</span>}
           </h2>
           <p className="text-muted-foreground text-sm mb-6">
-            Selecione sua praca preferida para exibicao de cotacoes e calculo do valor do estoque.
+            Selecione sua <strong>praça preferida</strong> para exibição de cotações da @ e cálculo do valor do estoque.
           </p>
 
           <div className="space-y-4">
