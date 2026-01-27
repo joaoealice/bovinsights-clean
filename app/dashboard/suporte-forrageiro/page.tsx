@@ -280,66 +280,25 @@ export default function SuporteForrageiro() {
           </div>
         </div>
 
-        {/* Alturas e Eficiência */}
+        {/* Eficiência de Pastejo */}
         {tipoPasto && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-            {/* Altura de Entrada */}
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-2">
-                Altura de Entrada (cm)
-              </label>
-              <input
-                type="number"
-                value={alturaEntrada}
-                onChange={(e) => setAlturaEntrada(e.target.value ? Number(e.target.value) : '')}
-                placeholder="Ex: 35"
-                min={0}
-                max={200}
-                className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Altura para entrada dos animais
-              </p>
-            </div>
-
-            {/* Altura de Saída */}
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-2">
-                Altura de Saída (cm)
-              </label>
-              <input
-                type="number"
-                value={alturaSaida}
-                onChange={(e) => setAlturaSaida(e.target.value ? Number(e.target.value) : '')}
-                placeholder="Ex: 15"
-                min={0}
-                max={200}
-                className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Altura para retirada dos animais
-              </p>
-            </div>
-
-            {/* Eficiência de Pastejo */}
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-2">
-                Eficiência de Pastejo: {Math.round(eficiencia * 100)}%
-              </label>
-              <input
-                type="range"
-                value={eficiencia}
-                onChange={(e) => setEficiencia(Number(e.target.value))}
-                min={0.3}
-                max={0.8}
-                step={0.05}
-                className="w-full h-3 rounded-lg appearance-none cursor-pointer accent-primary"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>30%</span>
-                <span>50% (recomendado)</span>
-                <span>80%</span>
-              </div>
+          <div className="mt-6 max-w-md">
+            <label className="block text-sm font-semibold text-foreground mb-2">
+              Eficiência de Pastejo: {Math.round(eficiencia * 100)}%
+            </label>
+            <input
+              type="range"
+              value={eficiencia}
+              onChange={(e) => setEficiencia(Number(e.target.value))}
+              min={0.3}
+              max={0.8}
+              step={0.05}
+              className="w-full h-3 rounded-lg appearance-none cursor-pointer accent-primary"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>30%</span>
+              <span>50% (recomendado)</span>
+              <span>80%</span>
             </div>
           </div>
         )}

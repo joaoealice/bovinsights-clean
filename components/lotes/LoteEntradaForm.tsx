@@ -175,10 +175,10 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
           <span>Informações do Lote</span>
         </h3>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Nome */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label className="block text-base font-semibold mb-2">
               Nome do Lote <span className="text-error">*</span>
             </label>
             <input
@@ -187,52 +187,62 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
               value={formData.nome}
               onChange={handleChange}
               required
-              placeholder="Ex: Lote 01 - Confinamento Dez/2024"
-              className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+              placeholder="Digite um nome para identificar o lote"
+              className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
             />
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Sugestao: use um nome descritivo como "Nelore Recria Jan/25" ou "Lote Engorda 01"
+            </p>
           </div>
 
           {/* Localização */}
           <div>
-            <label className="block text-sm font-semibold mb-2">
-              Localização
+            <label className="block text-base font-semibold mb-2">
+              Localizacao na Fazenda
             </label>
             <input
               type="text"
               name="localizacao"
               value={formData.localizacao}
               onChange={handleChange}
-              placeholder="Ex: Pasto 3, Setor Norte"
-              className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+              placeholder="Onde os animais estao alocados"
+              className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
             />
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Informe o local fisico: piquete, pasto, curral, etc.
+            </p>
           </div>
 
           {/* Tipo e Status */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold mb-2">
-                Tipo de Lote
+              <label className="block text-base font-semibold mb-2">
+                Tipo de Lote <span className="text-error">*</span>
               </label>
               <select
                 name="tipo_lote"
                 value={formData.tipo_lote}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                required
+                className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               >
-                <option value="">Selecione...</option>
-                <option value="confinamento">Confinamento</option>
+                <option value="">Selecione o tipo do lote</option>
+                <option value="pasto">Pasto (pastagem extensiva)</option>
                 <option value="semiconfinamento">Semi Confinamento</option>
-                <option value="pasto">Pasto</option>
-                <option value="cria">Cria</option>
-                <option value="recria">Recria</option>
-                <option value="engorda">Engorda</option>
-                <option value="reproducao">Reprodução</option>
-                <option value="quarentena">Quarentena</option>
+                <option value="confinamento">Confinamento (cocho)</option>
+                <option value="cria">Cria (bezerros)</option>
+                <option value="recria">Recria (desenvolvimento)</option>
+                <option value="engorda">Engorda (terminacao)</option>
+                <option value="reproducao">Reproducao (matrizes/touros)</option>
+                <option value="quarentena">Quarentena (isolamento)</option>
               </select>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Define como os animais serao manejados
+              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <label className="block text-base font-semibold mb-2">
                 Status <span className="text-error">*</span>
               </label>
               <select
@@ -240,12 +250,15 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
                 value={formData.status}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               >
-                <option value="ativo">Ativo</option>
-                <option value="inativo">Inativo</option>
-                <option value="manutencao">Manutenção</option>
+                <option value="ativo">Ativo (em producao)</option>
+                <option value="inativo">Inativo (encerrado)</option>
+                <option value="manutencao">Manutencao (pausado)</option>
               </select>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Lotes ativos aparecem no dashboard
+              </p>
             </div>
           </div>
         </div>
@@ -255,14 +268,17 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
       <div>
         <h3 className="font-display text-xl mb-4 flex items-center gap-2">
           <span>2</span>
-          <span>Entrada de Animais (opcional)</span>
+          <span>Entrada de Animais</span>
         </h3>
+        <p className="text-sm text-muted-foreground mb-6 -mt-2">
+          Informe os dados da compra ou transferencia dos animais
+        </p>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Data e Fornecedor */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <label className="block text-base font-semibold mb-2">
                 Data de Entrada
               </label>
               <input
@@ -270,44 +286,54 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
                 name="data_entrada"
                 value={formData.data_entrada}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Data em que os animais chegaram
+              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">
-                Fornecedor
+              <label className="block text-base font-semibold mb-2">
+                Fornecedor / Origem
               </label>
               <input
                 type="text"
                 name="fornecedor"
                 value={formData.fornecedor}
                 onChange={handleChange}
-                placeholder="Nome do fornecedor"
-                className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                placeholder="De onde vieram os animais"
+                className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Nome da fazenda, leilao ou proprietario anterior
+              </p>
             </div>
           </div>
 
           {/* Quantidade e Peso */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold mb-2">
-                Quantidade de Animais
+              <label className="block text-base font-semibold mb-2">
+                Quantidade de Animais <span className="text-error">*</span>
               </label>
               <input
                 type="number"
                 name="quantidade_total"
                 value={formData.quantidade_total}
                 onChange={handleChange}
-                min="0"
-                placeholder="Ex: 50"
-                className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                min="1"
+                required
+                placeholder="Quantas cabecas"
+                className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Total de cabecas que entraram no lote
+              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <label className="block text-base font-semibold mb-2">
                 Peso Total de Entrada (kg)
               </label>
               <input
@@ -317,12 +343,17 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
                 onChange={handleChange}
                 min="0"
                 step="0.1"
-                placeholder="Ex: 15000"
-                className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                placeholder="Soma do peso de todos os animais"
+                className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               />
-              {formData.peso_total_entrada && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  = {pesoArrobas.toFixed(2)} arrobas
+              {formData.peso_total_entrada ? (
+                <p className="text-xs text-success mt-1.5 font-medium">
+                  = {pesoArrobas.toFixed(2)} arrobas totais
+                  {formData.quantidade_total && ` | ${(parseFloat(formData.peso_total_entrada) / parseInt(formData.quantidade_total)).toFixed(1)} kg/animal`}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Se nao souber o peso total, deixe em branco
                 </p>
               )}
             </div>
@@ -423,16 +454,19 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
       {isPastagem && (
         <div>
           <h3 className="font-display text-xl mb-4 flex items-center gap-2">
-            <span>🌾</span>
+            <span>3</span>
             <span>Manejo de Pastagem</span>
           </h3>
+          <p className="text-sm text-muted-foreground mb-6 -mt-2">
+            Vincule o lote a um piquete para calcular o tempo ideal de permanencia
+          </p>
 
           <div className="bg-success/5 border border-success/30 rounded-lg p-6 space-y-6">
             {/* Peso Médio do Animal */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Peso Médio por Animal (kg)
+                <label className="block text-base font-semibold mb-2">
+                  Peso Medio por Animal (kg)
                 </label>
                 <input
                   type="number"
@@ -441,29 +475,33 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
                   onChange={handleChange}
                   min="0"
                   step="0.1"
-                  placeholder={pesoMedioCalculado > 0 ? `Calculado: ${pesoMedioCalculado.toFixed(1)} kg` : 'Ex: 350'}
-                  className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-success transition-all"
+                  placeholder={pesoMedioCalculado > 0 ? `Auto: ${pesoMedioCalculado.toFixed(0)} kg` : 'Peso medio individual'}
+                  className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-success transition-all"
                 />
-                {pesoMedioCalculado > 0 && !formData.peso_medio_animal && (
-                  <p className="text-xs text-success mt-1">
-                    Peso médio calculado: {pesoMedioCalculado.toFixed(1)} kg
+                {pesoMedioCalculado > 0 && !formData.peso_medio_animal ? (
+                  <p className="text-xs text-success mt-1.5 font-medium">
+                    Calculado automaticamente: {pesoMedioCalculado.toFixed(1)} kg/animal
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    Deixe em branco para calcular automaticamente
                   </p>
                 )}
               </div>
 
               {/* Seleção de Piquete */}
               <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Piquete / Área de Pastagem
+                <label className="block text-base font-semibold mb-2">
+                  Piquete / Area de Pastagem
                 </label>
                 <select
                   name="piquete_id"
                   value={formData.piquete_id}
                   onChange={handleChange}
                   disabled={loadingPiquetes}
-                  className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-success transition-all"
+                  className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg focus:outline-none focus:ring-2 focus:ring-success transition-all"
                 >
-                  <option value="">Selecione um piquete...</option>
+                  <option value="">Selecione onde o lote ficara</option>
                   <option value="avulso">Pasto Avulso (sem piquete cadastrado)</option>
                   {piquetes.map((piquete) => (
                     <option key={piquete.id} value={piquete.id}>
@@ -473,11 +511,11 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
                   ))}
                 </select>
                 {loadingPiquetes && (
-                  <p className="text-xs text-muted-foreground mt-1">Carregando piquetes...</p>
+                  <p className="text-xs text-muted-foreground mt-1.5">Carregando piquetes...</p>
                 )}
                 {piquetes.length === 0 && !loadingPiquetes && (
-                  <p className="text-xs text-warning mt-1">
-                    Nenhum piquete cadastrado. Cadastre em "Suporte Forrageiro".
+                  <p className="text-xs text-warning mt-1.5">
+                    Nenhum piquete cadastrado. Va em "Suporte Forrageiro" para cadastrar.
                   </p>
                 )}
               </div>
@@ -620,15 +658,18 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
       <div>
         <h3 className="font-display text-xl mb-4 flex items-center gap-2">
           <span>{isPastagem ? '4' : '3'}</span>
-          <span>Custos da Operação (opcional)</span>
+          <span>Custos da Operacao</span>
         </h3>
+        <p className="text-sm text-muted-foreground mb-6 -mt-2">
+          Informe os valores para calcular o custo por cabeca
+        </p>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Preço da Arroba */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-semibold mb-2">
-                Preço da @ na Compra (R$) <span className="text-error">*</span>
+              <label className="block text-base font-semibold mb-2">
+                Preco da @ na Compra (R$) <span className="text-error">*</span>
               </label>
               <input
                 type="number"
@@ -638,14 +679,17 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
                 required
                 min="0"
                 step="0.01"
-                placeholder="Ex: 280.00"
-                className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                placeholder="Valor pago por arroba"
+                className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Preco da arroba no momento da compra
+              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">
-                Frete (R$)
+              <label className="block text-base font-semibold mb-2">
+                Frete Total (R$)
               </label>
               <input
                 type="number"
@@ -654,14 +698,17 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
                 onChange={handleChange}
                 min="0"
                 step="0.01"
-                placeholder="Ex: 2500.00"
-                className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                placeholder="Custo do transporte"
+                className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Valor total gasto com transporte
+              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">
-                Comissão (R$)
+              <label className="block text-base font-semibold mb-2">
+                Comissao / Outros (R$)
               </label>
               <input
                 type="number"
@@ -670,9 +717,12 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
                 onChange={handleChange}
                 min="0"
                 step="0.01"
-                placeholder="Ex: 500.00"
-                className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                placeholder="Comissoes e taxas"
+                className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Comissao de corretor, leilao, etc.
+              </p>
             </div>
           </div>
 
@@ -726,17 +776,20 @@ export default function LoteEntradaForm({ onSubmit, submitLabel = 'Criar Lote' }
 
       {/* Seção: Observações */}
       <div>
-        <label className="block text-sm font-semibold mb-2">
-          Observações
+        <label className="block text-base font-semibold mb-2">
+          Observacoes
         </label>
         <textarea
           name="observacoes"
           value={formData.observacoes}
           onChange={handleChange}
-          rows={3}
-          placeholder="Informações adicionais sobre o lote..."
-          className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
+          rows={4}
+          placeholder="Anotacoes importantes sobre este lote (opcional)"
+          className="w-full px-4 py-4 rounded-lg bg-muted/30 border border-border text-foreground text-lg placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
         />
+        <p className="text-xs text-muted-foreground mt-1.5">
+          Historico de saude, caracteristicas do lote, acordos com fornecedor, etc.
+        </p>
       </div>
 
       {/* Botão Submit */}

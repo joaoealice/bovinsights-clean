@@ -154,13 +154,13 @@ export default function SecaoManejoPastagem() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="font-display text-2xl">MANEJO DE PASTAGEM</h2>
-          <p className="text-muted-foreground text-sm">Gerencie a rotacao de piquetes do rebanho</p>
+          <p className="text-muted-foreground text-sm">Gerencie a rotacao de piquetes e acompanhe o tempo de permanencia</p>
         </div>
         <Link
-          href="/dashboard/mapa"
+          href="/dashboard/suporte-forrageiro"
           className="px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg transition-all text-sm font-medium"
         >
-          + Novo Piquete
+          + Cadastrar Piquete
         </Link>
       </div>
 
@@ -238,10 +238,10 @@ export default function SecaoManejoPastagem() {
           <span className="text-6xl block mb-4">🌾</span>
           <h3 className="font-display text-2xl mb-2">NENHUM PIQUETE CADASTRADO</h3>
           <p className="text-muted-foreground mb-6">
-            Cadastre areas de pastagem no mapa para gerenciar a rotacao
+            Cadastre suas areas de pastagem para gerenciar a rotacao do rebanho
           </p>
           <Link
-            href="/dashboard/mapa"
+            href="/dashboard/suporte-forrageiro"
             className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold px-6 py-3 rounded-lg transition-all"
           >
             <span>+</span>

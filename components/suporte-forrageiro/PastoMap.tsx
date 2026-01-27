@@ -23,6 +23,15 @@ interface PastoMapProps {
   onClearPolygon: () => void
 }
 
+// Chave para localStorage
+const DRAFT_STORAGE_KEY = 'bovinsights_pasto_draft'
+
+interface DraftData {
+  coordinates: [number, number][]
+  timestamp: number
+  inputMode: InputMode
+}
+
 // Definição das camadas disponíveis
 const MAP_LAYERS = {
   mapa: {
@@ -183,9 +192,14 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon }: PastoMapPro
   const [isDrawing, setIsDrawing] = useState(false)
   const [hasPolygon, setHasPolygon] = useState(false)
   const [pointCount, setPointCount] = useState(0)
-  const [activeLayer, setActiveLayer] = useState<MapLayerKey>('mapa')
+  const [activeLayer, setActiveLayer] = useState<MapLayerKey>('satelite')
   const [inputMode, setInputMode] = useState<InputMode>('desenho')
   const [currentGeometry, setCurrentGeometry] = useState<PastoGeometry | null>(null)
+
+  // Estados para modo desenho protegido
+  const [isDrawingMode, setIsDrawingMode] = useState(false)
+  const [showDraftModal, setShowDraftModal] = useState(false)
+  const [draftData, setDraftData] = useState<DraftData | null>(null)
 
   // Estados para busca de localização
   const [searchQuery, setSearchQuery] = useState('')
@@ -202,17 +216,18 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon }: PastoMapPro
   const [coordenadasErro, setCoordenadasErro] = useState('')
   const [coordenadasLista, setCoordenadasLista] = useState<[number, number][]>([])
 
-  // Inicializar mapa
+  // Inicializar mapa - sempre em modo satélite e centralizado no Brasil
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return
 
     const map = L.map(mapContainerRef.current, {
-      center: [-15.7801, -47.9292],
-      zoom: 5,
+      center: [-14.235, -51.9253], // Centro geográfico do Brasil
+      zoom: 4,
       zoomControl: true,
     })
 
-    const layer = MAP_LAYERS.mapa
+    // Iniciar sempre em modo satélite
+    const layer = MAP_LAYERS.satelite
     const tileLayer = L.tileLayer(layer.url, {
       attribution: layer.attribution,
       maxZoom: layer.maxZoom,
@@ -466,7 +481,7 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon }: PastoMapPro
     mapRef.current.setView([lat, lng], zoom)
   }, [])
 
-  // Buscar por endereço
+  // Buscar por endereço (usando API interna para evitar CORS)
   const searchLocation = async () => {
     if (!searchQuery.trim()) return
 
@@ -474,10 +489,11 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon }: PastoMapPro
     setSearchError('')
 
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=br`,
-        { headers: { 'User-Agent': 'BovinsightsApp/1.0' } }
-      )
+      const response = await fetch(`/api/geocode?q=${encodeURIComponent(searchQuery)}`)
+
+      if (!response.ok) {
+        throw new Error('Falha na busca')
+      }
 
       const data = await response.json()
 
@@ -543,18 +559,13 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon }: PastoMapPro
     setPointCount(0)
     setHasPolygon(false)
     setIsDrawing(false)
+    setIsDrawingMode(false)
     setCurrentGeometry(null)
     setCoordenadasLista([])
     setCoordenadasTexto('')
     setCoordenadasErro('')
     onClearPolygon()
   }, [onClearPolygon])
-
-  // Iniciar modo de desenho
-  const startDrawing = () => {
-    clearDrawing()
-    setIsDrawing(true)
-  }
 
   // Finalizar polígono
   const finishPolygon = useCallback(() => {
@@ -583,9 +594,12 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon }: PastoMapPro
     const geometry = criarGeometria(coords)
     if (geometry) {
       onPolygonDrawn(geometry)
+      // Limpar rascunho após salvar com sucesso
+      localStorage.removeItem(DRAFT_STORAGE_KEY)
     }
 
     setIsDrawing(false)
+    setIsDrawingMode(false)
     setHasPolygon(true)
   }, [desenharPoligono, criarGeometria, onPolygonDrawn])
 
@@ -658,10 +672,165 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon }: PastoMapPro
     }
   }, [isDrawing])
 
+  // Verificar rascunho ao carregar
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY)
+      if (savedDraft) {
+        const draft: DraftData = JSON.parse(savedDraft)
+        // Verificar se o rascunho tem menos de 24 horas
+        const hoursAgo = (Date.now() - draft.timestamp) / (1000 * 60 * 60)
+        if (hoursAgo < 24 && draft.coordinates.length >= 1) {
+          setDraftData(draft)
+          setShowDraftModal(true)
+        } else {
+          // Rascunho expirado, remover
+          localStorage.removeItem(DRAFT_STORAGE_KEY)
+        }
+      }
+    } catch (e) {
+      // Erro ao ler localStorage, ignorar
+      localStorage.removeItem(DRAFT_STORAGE_KEY)
+    }
+  }, [])
+
+  // Salvar rascunho automaticamente a cada alteração
+  const saveDraft = useCallback((coords: [number, number][]) => {
+    if (coords.length === 0) {
+      localStorage.removeItem(DRAFT_STORAGE_KEY)
+      return
+    }
+
+    const draft: DraftData = {
+      coordinates: coords,
+      timestamp: Date.now(),
+      inputMode
+    }
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft))
+  }, [inputMode])
+
+  // Salvar automaticamente quando coordenadas mudam
+  useEffect(() => {
+    if (coordenadasLista.length > 0) {
+      saveDraft(coordenadasLista)
+    } else if (pointsRef.current.length > 0) {
+      const coords: [number, number][] = pointsRef.current.map(p => [p.lat, p.lng])
+      saveDraft(coords)
+    }
+  }, [coordenadasLista, pointCount, saveDraft])
+
+  // Restaurar rascunho
+  const restoreDraft = useCallback(() => {
+    if (!draftData) return
+
+    setInputMode(draftData.inputMode)
+    setCoordenadasLista(draftData.coordinates)
+    setCoordenadasTexto(draftData.coordinates.map(c => `${c[0]}, ${c[1]}`).join('\n'))
+
+    if (draftData.coordinates.length >= 4) {
+      desenharPoligono(draftData.coordinates)
+      const geometry = criarGeometria(draftData.coordinates)
+      if (geometry) {
+        onPolygonDrawn(geometry)
+      }
+    }
+
+    setShowDraftModal(false)
+    setDraftData(null)
+  }, [draftData, desenharPoligono, criarGeometria, onPolygonDrawn])
+
+  // Descartar rascunho
+  const discardDraft = useCallback(() => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY)
+    setShowDraftModal(false)
+    setDraftData(null)
+  }, [])
+
+  // Bloquear scroll e interações externas quando em modo desenho
+  useEffect(() => {
+    if (isDrawingMode) {
+      // Bloquear scroll da página
+      document.body.style.overflow = 'hidden'
+
+      // Prevenir navegação acidental (beforeunload)
+      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        e.preventDefault()
+        e.returnValue = 'Você tem um desenho em andamento. Deseja realmente sair?'
+        return e.returnValue
+      }
+
+      window.addEventListener('beforeunload', handleBeforeUnload)
+
+      return () => {
+        document.body.style.overflow = ''
+        window.removeEventListener('beforeunload', handleBeforeUnload)
+      }
+    } else {
+      document.body.style.overflow = ''
+    }
+  }, [isDrawingMode])
+
+  // Ativar modo desenho protegido ao iniciar desenho
+  const startDrawingProtected = useCallback(() => {
+    clearDrawing()
+    setIsDrawing(true)
+    setIsDrawingMode(true)
+  }, [clearDrawing])
+
   return (
-    <div className="space-y-4">
-      {/* Barra de busca de localização */}
-      <div className="flex flex-wrap gap-2 items-center">
+    <>
+      {/* Modal de restauração de rascunho */}
+      {showDraftModal && draftData && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-xl p-6 max-w-md mx-4 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-2xl">💾</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg text-foreground">Rascunho encontrado</h3>
+                <p className="text-sm text-muted-foreground">
+                  Você tem um desenho salvo ({draftData.coordinates.length} pontos)
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-6">
+              Salvo {new Date(draftData.timestamp).toLocaleString('pt-BR')}.
+              Deseja continuar de onde parou?
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={restoreDraft}
+                className="flex-1 bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-4 rounded-lg transition-all"
+              >
+                Continuar
+              </button>
+              <button
+                onClick={discardDraft}
+                className="flex-1 bg-muted hover:bg-muted/80 text-foreground font-semibold py-3 px-4 rounded-lg transition-all"
+              >
+                Descartar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Overlay de proteção quando em modo desenho */}
+      {isDrawingMode && (
+        <div
+          className="fixed inset-0 z-[1000] pointer-events-none"
+          style={{ touchAction: 'none' }}
+        >
+          {/* Área clicável apenas no mapa - o resto bloqueia interações */}
+        </div>
+      )}
+
+    <div className={`space-y-4 ${isDrawingMode ? 'relative z-[1001]' : ''}`}>
+      {/* Barra de busca de localização - desabilitada durante modo desenho */}
+      <div className={`flex flex-wrap gap-2 items-center ${isDrawingMode ? 'opacity-50 pointer-events-none' : ''}`}>
         <div className="flex-1 min-w-[200px] flex gap-1">
           <input
             type="text"
@@ -669,11 +838,12 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon }: PastoMapPro
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && searchLocation()}
             placeholder="Buscar local..."
-            className="flex-1 px-3 py-2 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
+            disabled={isDrawingMode}
+            className="flex-1 px-3 py-2 rounded-lg bg-muted/30 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm disabled:opacity-50"
           />
           <button
             onClick={searchLocation}
-            disabled={searching || !searchQuery.trim()}
+            disabled={searching || !searchQuery.trim() || isDrawingMode}
             className="p-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-white rounded-lg transition-all"
             title="Buscar"
           >
@@ -687,7 +857,8 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon }: PastoMapPro
 
         <button
           onClick={() => setShowManualInput(!showManualInput)}
-          className={`p-2 rounded-lg transition-all ${showManualInput ? 'bg-accent text-white' : 'bg-muted hover:bg-muted/80 text-foreground'}`}
+          disabled={isDrawingMode}
+          className={`p-2 rounded-lg transition-all ${showManualInput ? 'bg-accent text-white' : 'bg-muted hover:bg-muted/80 text-foreground'} disabled:opacity-50`}
           title="Ir para coordenada"
         >
           <span className="text-lg">📍</span>
@@ -723,36 +894,42 @@ export default function PastoMap({ onPolygonDrawn, onClearPolygon }: PastoMapPro
         )}
       </div>
 
-      {/* Seletor de modo de entrada */}
+      {/* Seletor de modo de entrada - desabilitado durante modo desenho */}
       <div className="card-leather p-4">
-        <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className={`flex flex-wrap items-center gap-3 mb-4 ${isDrawingMode ? 'opacity-50' : ''}`}>
           <span className="text-sm font-semibold text-muted-foreground">Modo:</span>
           <div className="flex gap-1">
             <button
               onClick={() => setInputMode('desenho')}
+              disabled={isDrawingMode}
               className={`p-2 rounded-lg transition-all ${
                 inputMode === 'desenho'
                   ? 'bg-primary text-white'
                   : 'bg-muted/50 text-foreground hover:bg-muted'
-              }`}
+              } disabled:cursor-not-allowed`}
               title="Desenhar no mapa"
             >
               <span className="text-lg">✏️</span>
             </button>
             <button
               onClick={() => setInputMode('coordenadas')}
+              disabled={isDrawingMode}
               className={`p-2 rounded-lg transition-all ${
                 inputMode === 'coordenadas'
                   ? 'bg-primary text-white'
                   : 'bg-muted/50 text-foreground hover:bg-muted'
-              }`}
+              } disabled:cursor-not-allowed`}
               title="Inserir coordenadas"
             >
               <span className="text-lg">📝</span>
             </button>
           </div>
           <span className="text-xs text-muted-foreground">
-            {inputMode === 'desenho' ? 'Clique no mapa para marcar pontos' : 'Cole coordenadas'}
+            {isDrawingMode
+              ? 'Finalize ou cancele o desenho para mudar de modo'
+              : inputMode === 'desenho'
+                ? 'Clique no mapa para marcar pontos'
+                : 'Cole coordenadas'}
           </span>
         </div>
 
@@ -841,11 +1018,11 @@ Ou formato JSON: [[-23.5505, -46.6333], [-23.5510, -46.6340], ...]`}
           <div className="flex flex-wrap items-center gap-2">
             {!isDrawing && !hasPolygon && (
               <button
-                onClick={startDrawing}
+                onClick={startDrawingProtected}
                 className="bg-primary hover:bg-primary/90 text-white font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
               >
                 <span>✏️</span>
-                Desenhar
+                Desenhar Área
               </button>
             )}
 
@@ -893,34 +1070,15 @@ Ou formato JSON: [[-23.5505, -46.6333], [-23.5510, -46.6340], ...]`}
           style={{ cursor: isDrawing ? 'crosshair' : 'grab' }}
         />
 
-        {/* Seletor de camadas */}
-        <div className="absolute top-4 left-4 z-[1000]">
-          <div className="bg-card border border-border rounded-lg shadow-lg overflow-hidden">
-            <p className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/50 border-b border-border">
-              Tipo de Mapa
-            </p>
-            <div className="p-1">
-              {(Object.keys(MAP_LAYERS) as MapLayerKey[]).map((layerKey) => {
-                const layer = MAP_LAYERS[layerKey]
-                const isActive = activeLayer === layerKey
-                return (
-                  <button
-                    key={layerKey}
-                    onClick={() => changeMapLayer(layerKey)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 rounded text-sm font-medium transition-all ${
-                      isActive
-                        ? 'bg-primary text-white'
-                        : 'text-foreground hover:bg-muted/50'
-                    }`}
-                  >
-                    <span>{layer.icon}</span>
-                    <span>{layer.name}</span>
-                  </button>
-                )
-              })}
+        {/* Indicador de modo desenho ativo */}
+        {isDrawingMode && (
+          <div className="absolute top-4 left-4 z-[1000]">
+            <div className="bg-primary text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-pulse">
+              <span className="text-lg">✏️</span>
+              <span className="font-semibold text-sm">Modo Desenho Ativo</span>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Informações do polígono */}
         {currentGeometry && (
@@ -951,11 +1109,12 @@ Ou formato JSON: [[-23.5505, -46.6333], [-23.5510, -46.6340], ...]`}
         {!isDrawing && !hasPolygon && inputMode === 'desenho' && (
           <div className="absolute bottom-4 left-4 right-4 z-[1000] bg-card/95 border border-border rounded-lg p-3 text-center">
             <p className="text-sm text-muted-foreground">
-              <strong>1.</strong> Busque sua localização | <strong>2.</strong> Escolha o tipo de mapa | <strong>3.</strong> Clique em "Iniciar Desenho"
+              <strong>1.</strong> Busque sua localização | <strong>2.</strong> Clique em "Desenhar Área" | <strong>3.</strong> Marque os pontos no mapa
             </p>
           </div>
         )}
       </div>
     </div>
+    </>
   )
 }
